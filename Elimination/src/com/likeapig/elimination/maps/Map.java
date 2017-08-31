@@ -3,9 +3,12 @@ package com.likeapig.elimination.maps;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
 
 import com.likeapig.elimination.Settings;
 import com.likeapig.elimination.maps.MessageManager.MessageType;
@@ -24,7 +27,6 @@ public class Map {
 	private static List<Player> bDead;
 	private int aWins;
 	private int bWins;
-	private int won;
 	private Location aLoc;
 	private Location bLoc;
 	private MapState state;
@@ -33,7 +35,6 @@ public class Map {
 		name = n;
 		aWins = 0;
 		bWins = 0;
-		won = 0;
 		alpha = new ArrayList<Alpha>();
 		bravo = new ArrayList<Bravo>();
 		aDead = new ArrayList<Player>();
@@ -64,7 +65,7 @@ public class Map {
 			Settings.get().set("maps." + getName() + ".bloc", LocationUtils.locationToString(bLoc));
 		}
 	}
-	
+
 	public void loadFromConfig() {
 		Settings s = Settings.get();
 		if (s.get("maps." + getName() + ".aloc") != null) {
@@ -84,13 +85,31 @@ public class Map {
 		startNewRound();
 	}
 
+	public void handleRespawn(PlayerRespawnEvent e) {
+		Player p = e.getPlayer();
+		if (isStarted()) {
+			if (containsAPlayer(p)) {
+				Alpha a = getAlpha(p);
+				p.teleport(a.getDeathLoc());
+			}
+			if (containsBPlayer(p)) {
+				Bravo b = getBravo(p);
+				p.teleport(b.getDeathLoc());
+			}
+		}
+	}
+
 	public void handleDeath(PlayerDeathEvent e) {
 		Player p = e.getEntity();
 		if (isStarted()) {
 			if (containsAPlayer(p)) {
+				Alpha a = getAlpha(p);
+				a.setDeathLoc(p.getLocation());
 				onADeath(p);
 			}
 			if (containsBPlayer(p)) {
+				Bravo b = getBravo(p);
+				b.setDeathLoc(p.getLocation());
 				onBDeath(p);
 			}
 			if (aDead.size() >= 1) {
@@ -121,17 +140,19 @@ public class Map {
 		List<Alpha> aWinners = new ArrayList<Alpha>();
 		List<Bravo> bWinners = new ArrayList<Bravo>();
 		boolean flag = aWins + bWins == 0;
-		if (aWins >= 5 || bWins >= 5) {
-			if (aWins >= 5) {
-				won = 1;
+		boolean aWon = false;
+		boolean bWon = false;
+		if (aWins >= 1 || bWins >= 1) {
+			if (aWins >= 1) {
+				aWon = true;
 				for (Alpha a : alpha) {
 					if (aWinners.isEmpty()) {
 						aWinners.add(a);
 					}
 				}
 			}
-			if (bWins >= 5) {
-				won = 2;
+			if (bWins >= 1) {
+				bWon = true;
 				for (Bravo b : bravo) {
 					if (bWinners.isEmpty()) {
 						bWinners.add(b);
@@ -139,7 +160,7 @@ public class Map {
 				}
 			}
 			message(ChatColor.RED + "GAME OVER");
-			if (won == 1) {
+			if (aWon) {
 				if (aWinners.size() > 1) {
 					String s = ChatColor.GOLD + "Winners: ";
 					for (Alpha a : aWinners) {
@@ -150,15 +171,17 @@ public class Map {
 						}
 					}
 					message(s);
+					aWon = false;
 					stop();
 					return;
 				} else {
 					message(ChatColor.GOLD + "Winner: " + aWinners.get(0).getPlayer().getName());
+					aWon = false;
 					stop();
 					return;
 				}
 			}
-			if (won == 2) {
+			if (bWon) {
 				if (bWinners.size() > 1) {
 					String s = ChatColor.GOLD + "Winners: ";
 					for (Bravo b : bWinners) {
@@ -169,10 +192,12 @@ public class Map {
 						}
 					}
 					message(s);
+					bWon = false;
 					stop();
 					return;
 				} else {
 					message(ChatColor.GOLD + "Winner: " + aWinners.get(0).getPlayer().getName());
+					bWon = false;
 					stop();
 					return;
 				}
@@ -188,17 +213,20 @@ public class Map {
 	}
 
 	public void stop() {
-		won = 0;
+		aWins = 0;
+		bWins = 0;
 		setState(MapState.WAITING);
 		kickAll(true);
-	}
-	
-	public int getWon() {
-		return won;
 	}
 
 	public void start() {
 		setState(MapState.STARTED);
+		for (Alpha a : alpha) {
+			a.ready();
+		}
+		for (Bravo b : bravo) {
+			b.ready();
+		}
 		startNewRound();
 	}
 
