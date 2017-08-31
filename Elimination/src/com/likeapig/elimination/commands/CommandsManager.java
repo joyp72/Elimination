@@ -31,6 +31,14 @@ public class CommandsManager implements CommandExecutor {
 
 	public void setup() {
 		Main.get().getCommand("e").setExecutor(this);
+		cmds.add(new Join());
+		cmds.add(new Create());
+		cmds.add(new SetASpawn());
+		cmds.add(new SetBSpawn());
+		cmds.add(new com.likeapig.elimination.commands.List());
+		cmds.add(new Leave());
+		cmds.add(new Start());
+		cmds.add(new Stop());
 	}
 
 	public boolean onCommand(CommandSender sender, Command cmd, String arg2, String[] args) {

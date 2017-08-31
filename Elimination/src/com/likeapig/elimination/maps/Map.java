@@ -7,9 +7,11 @@ import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.PlayerDeathEvent;
 
+import com.likeapig.elimination.Settings;
 import com.likeapig.elimination.maps.MessageManager.MessageType;
 import com.likeapig.elimination.teams.Alpha;
 import com.likeapig.elimination.teams.Bravo;
+import com.likeapig.elimination.utils.LocationUtils;
 
 import net.md_5.bungee.api.ChatColor;
 
@@ -22,6 +24,7 @@ public class Map {
 	private static List<Player> bDead;
 	private int aWins;
 	private int bWins;
+	private int won;
 	private Location aLoc;
 	private Location bLoc;
 	private MapState state;
@@ -30,19 +33,57 @@ public class Map {
 		name = n;
 		aWins = 0;
 		bWins = 0;
+		won = 0;
 		alpha = new ArrayList<Alpha>();
 		bravo = new ArrayList<Bravo>();
 		aDead = new ArrayList<Player>();
 		bDead = new ArrayList<Player>();
+		loadFromConfig();
+		saveToConfig();
 		checkState();
 
 	}
 
-	public void endRound() {
-		message(ChatColor.RED + "The round has ended!");
-		startNewRound();
+	public void setALoc(Location l) {
+		aLoc = l;
+		checkState();
+		saveToConfig();
+	}
+
+	public void setBLoc(Location l) {
+		bLoc = l;
+		checkState();
+		saveToConfig();
+	}
+
+	public void saveToConfig() {
+		if (aLoc != null) {
+			Settings.get().set("maps." + getName() + ".aloc", LocationUtils.locationToString(aLoc));
+		}
+		if (bLoc != null) {
+			Settings.get().set("maps." + getName() + ".bloc", LocationUtils.locationToString(bLoc));
+		}
 	}
 	
+	public void loadFromConfig() {
+		Settings s = Settings.get();
+		if (s.get("maps." + getName() + ".aloc") != null) {
+			String s3 = s.get("maps." + getName() + ".aloc");
+			aLoc = LocationUtils.stringToLocation(s3);
+		}
+		if (s.get("maps." + getName() + ".bloc") != null) {
+			String s2 = s.get("maps." + getName() + ".bloc");
+			bLoc = LocationUtils.stringToLocation(s2);
+		}
+	}
+
+	public void endRound() {
+		message(ChatColor.RED + "The round has ended!");
+		aDead.clear();
+		bDead.clear();
+		startNewRound();
+	}
+
 	public void handleDeath(PlayerDeathEvent e) {
 		Player p = e.getEntity();
 		if (isStarted()) {
@@ -52,15 +93,15 @@ public class Map {
 			if (containsBPlayer(p)) {
 				onBDeath(p);
 			}
-			if (aDead.size() >= 3) {
+			if (aDead.size() >= 1) {
 				onEliminated(1);
 			}
-			if (bDead.size() >= 3) {
+			if (bDead.size() >= 1) {
 				onEliminated(2);
 			}
 		}
 	}
-	
+
 	public void onEliminated(int i) {
 		if (i == 1) {
 			bWins++;
@@ -79,7 +120,6 @@ public class Map {
 	public void startNewRound() {
 		List<Alpha> aWinners = new ArrayList<Alpha>();
 		List<Bravo> bWinners = new ArrayList<Bravo>();
-		int won = 0;
 		boolean flag = aWins + bWins == 0;
 		if (aWins >= 5 || bWins >= 5) {
 			if (aWins >= 5) {
@@ -148,8 +188,13 @@ public class Map {
 	}
 
 	public void stop() {
+		won = 0;
 		setState(MapState.WAITING);
 		kickAll(true);
+	}
+	
+	public int getWon() {
+		return won;
 	}
 
 	public void start() {
@@ -210,6 +255,7 @@ public class Map {
 			alpha.add(a);
 			p.teleport(aLoc);
 			message(ChatColor.GREEN + p.getName() + " joined the Map.");
+			MessageManager.get().message(p, "You joined Alpha team.");
 			if (state.equals(MapState.WAITING) && getNumberOfAPlayers() == 3) {
 				start();
 			}
@@ -222,6 +268,7 @@ public class Map {
 			bravo.add(b);
 			p.teleport(bLoc);
 			message(ChatColor.GREEN + p.getName() + " joined the game.");
+			MessageManager.get().message(p, "You joined Bravo team.");
 			if (state.equals(MapState.WAITING) && getNumberOfBPlayers() == 3) {
 				start();
 			}
@@ -287,6 +334,20 @@ public class Map {
 		}
 	}
 
+	public void onRemoved() {
+		if (isStarted()) {
+			stop();
+		} else {
+			for (Player p : getAPlayers()) {
+				removeAlphaPlayer(p);
+			}
+			for (Player p : getBPlayers()) {
+				removeBravoPlayer(p);
+			}
+		}
+		setState(MapState.STOPPED);
+	}
+
 	public void kickPlayer(Player p) {
 		if (containsAPlayer(p)) {
 			removeAlphaPlayer(p);
@@ -331,7 +392,7 @@ public class Map {
 		return players;
 	}
 
-	public static boolean containsAPlayer(Player p) {
+	public boolean containsAPlayer(Player p) {
 		for (Alpha a : alpha) {
 			if (a.getPlayer().equals(p)) {
 				return true;
@@ -340,7 +401,7 @@ public class Map {
 		return false;
 	}
 
-	public static boolean containsBPlayer(Player p) {
+	public boolean containsBPlayer(Player p) {
 		for (Bravo b : bravo) {
 			if (b.getPlayer().equals(p)) {
 				return true;
@@ -382,7 +443,7 @@ public class Map {
 	public Map getMap() {
 		return this;
 	}
-	
+
 	public boolean isStarted() {
 		return state.equals(MapState.STARTED);
 	}
