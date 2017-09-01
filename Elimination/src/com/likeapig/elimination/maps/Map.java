@@ -16,6 +16,7 @@ import org.bukkit.event.player.PlayerToggleSneakEvent;
 import com.likeapig.elimination.Main;
 import com.likeapig.elimination.Settings;
 import com.likeapig.elimination.maps.MessageManager.MessageType;
+import com.likeapig.elimination.scoreboard.ScoreBoard;
 import com.likeapig.elimination.teams.Alpha;
 import com.likeapig.elimination.teams.Bravo;
 import com.likeapig.elimination.utils.LocationUtils;
@@ -108,30 +109,38 @@ public class Map {
 		Player p = e.getPlayer();
 		Map m = MapManager.get().getMap(p);
 		if (isStarted()) {
-			//if (containsAPlayer(p)) {
-				for (Alpha a : alpha) {
-					if (a.isDead()) {
-						Location l = a.getDeathLoc();
-						if (p.getLocation().subtract(0, 1, 0).getBlock().getLocation() == l.subtract(0, 1, 0).getBlock().getLocation()) {
-							p.sendMessage("dead here");
-							a.ready();
-							a.getPlayer().teleport(l);
+			if (containsAPlayer(p)) {
+				if (p.isSneaking()) {
+					for (Alpha a : alpha) {
+						if (a.isDead()) {
+							Location l = a.getDeathLoc();
+							if (p.getLocation().distance(l) <= 1  && !getAlpha(p).isDead()) {
+								a.ready();
+								a.setDead(false);
+								a.getPlayer().teleport(l);
+								a.removeDeathCircle();
+								onARemoveDeath(a.getPlayer());
+								updateBoard();
+							}
 						}
 					}
 				}
-			//}
-			//if (containsBPlayer(p)) {
-				for (Bravo b : bravo) {
-					if (b.isDead()) {
-						Location l = b.getDeathLoc();
-						if (p.getLocation().subtract(0, 1, 0).getBlock().getLocation() == l.subtract(0, 1, 0).getBlock().getLocation()) {
-							p.sendMessage("dead here");
-							b.ready();
-							b.getPlayer().teleport(l);
+				if (containsBPlayer(p)) {
+					for (Bravo b : bravo) {
+						if (b.isDead()) {
+							Location l = b.getDeathLoc();
+							if (p.getLocation().distance(l) <= 1  && !getBravo(p).isDead()) {
+								b.ready();
+								b.setDead(false);
+								b.getPlayer().teleport(l);
+								b.removeDeathCircle();
+								onBRemoveDeath(b.getPlayer());
+								updateBoard();
+							}
 						}
 					}
 				}
-			//}
+			}
 		}
 	}
 
@@ -172,12 +181,14 @@ public class Map {
 						a.setDead(true);
 						a.playDeathCircle(l);
 						a.setDeathLoc(l);
+						updateBoard();
 					}
 					if (containsBPlayer(p)) {
 						Bravo b = getBravo(p);
 						b.setDead(true);
 						b.playDeathCircle(l);
 						b.setDeathLoc(l);
+						updateBoard();
 					}
 				}
 			}
@@ -226,6 +237,17 @@ public class Map {
 			}
 			if (bDead.size() >= 3) {
 				onEliminated(2);
+			}
+		}
+	}
+
+	public void removeDeath(Player p) {
+		if (isStarted()) {
+			if (containsAPlayer(p)) {
+				onARemoveDeath(p);
+			}
+			if (containsBPlayer(p)) {
+				onBRemoveDeath(p);
 			}
 		}
 	}
@@ -362,10 +384,26 @@ public class Map {
 		}
 	}
 
+	public void onARemoveDeath(Player p) {
+		if (containsAPlayer(p)) {
+			if (aDead.contains(p)) {
+				aDead.remove(p);
+			}
+		}
+	}
+
 	public void onBDeath(Player p) {
 		if (containsBPlayer(p)) {
 			if (!bDead.contains(p)) {
 				bDead.add(p);
+			}
+		}
+	}
+
+	public void onBRemoveDeath(Player p) {
+		if (containsBPlayer(p)) {
+			if (bDead.contains(p)) {
+				bDead.remove(p);
 			}
 		}
 	}
@@ -394,6 +432,7 @@ public class Map {
 			Alpha a = new Alpha(p, this);
 			alpha.add(a);
 			p.teleport(aLoc);
+			updateBoard();
 			message(ChatColor.GREEN + p.getName() + " joined the Map.");
 			MessageManager.get().message(p, "You joined Alpha team.");
 			if (state.equals(MapState.WAITING) && getNumberOfAPlayers() == 3) {
@@ -407,6 +446,7 @@ public class Map {
 			Bravo b = new Bravo(p, this);
 			bravo.add(b);
 			p.teleport(bLoc);
+			updateBoard();
 			message(ChatColor.GREEN + p.getName() + " joined the game.");
 			MessageManager.get().message(p, "You joined Bravo team.");
 			if (state.equals(MapState.WAITING) && getNumberOfBPlayers() == 3) {
@@ -420,6 +460,9 @@ public class Map {
 			Alpha a = getAlpha(p);
 			a.restore();
 			alpha.remove(a);
+			updateBoard();
+			a.removeDeathCircle();
+			ScoreBoard.get().removeSB(p);
 			if (state.equals(MapState.STARTED) && getNumberOfAPlayers() < 1) {
 				stop();
 				message(ChatColor.RED + "Players left, stopping game.");
@@ -432,10 +475,22 @@ public class Map {
 			Bravo b = getBravo(p);
 			b.restore();
 			bravo.remove(b);
+			updateBoard();
+			b.removeDeathCircle();
+			ScoreBoard.get().removeSB(p);
 			if (state.equals(MapState.STARTED) && getNumberOfBPlayers() < 1) {
 				stop();
 				message(ChatColor.RED + "Players left, stopping game.");
 			}
+		}
+	}
+
+	public void updateBoard() {
+		for (Player aP : getAPlayers()) {
+			ScoreBoard.get().updateSB(aP);
+		}
+		for (Player bP : getBPlayers()) {
+			ScoreBoard.get().updateSB(bP);
 		}
 	}
 
@@ -550,7 +605,7 @@ public class Map {
 		return false;
 	}
 
-	public static Alpha getAlpha(Player p) {
+	public Alpha getAlpha(Player p) {
 		for (Alpha a : alpha) {
 			if (a.getPlayer().equals(p)) {
 				return a;
@@ -559,7 +614,7 @@ public class Map {
 		return null;
 	}
 
-	public static Bravo getBravo(Player p) {
+	public Bravo getBravo(Player p) {
 		for (Bravo b : bravo) {
 			if (b.getPlayer().equals(p)) {
 				return b;

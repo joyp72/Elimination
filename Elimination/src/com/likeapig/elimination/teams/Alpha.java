@@ -40,6 +40,7 @@ public class Alpha {
 		level = p.getLevel();
 		xp = p.getExp();
 		health = p.getHealth();
+		isDead = false;
 	}
 
 	public void ready() {
