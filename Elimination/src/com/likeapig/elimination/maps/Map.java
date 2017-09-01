@@ -8,7 +8,6 @@ import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerToggleSneakEvent;
@@ -35,11 +34,13 @@ public class Map {
 	private Location aLoc;
 	private Location bLoc;
 	private MapState state;
+	private int countdown;
 
 	public Map(String n) {
 		name = n;
 		aWins = 0;
 		bWins = 0;
+		countdown = 0;
 		alpha = new ArrayList<Alpha>();
 		bravo = new ArrayList<Bravo>();
 		aDead = new ArrayList<Player>();
@@ -48,6 +49,27 @@ public class Map {
 		saveToConfig();
 		checkState();
 
+	}
+	
+	public void onTimerTick(String arg, int timer) {
+		if (arg.equalsIgnoreCase("endround")) {
+			countdown = timer;
+			updateBoard();
+			if (countdown < 30) {
+				for (Player ap : getAPlayers()) {
+					ActionBars.get().addActionBar(ap, "§c§lTime left: " + countdown);
+				}
+				for (Player bp : getBPlayers()) {
+					ActionBars.get().addActionBar(bp, "§c§lTime left: " + countdown);
+				}
+			}
+		}
+	}
+	
+	public void onTimerEnd(String arg) {
+		if (arg.equalsIgnoreCase("endround")) {
+			endRound();
+		}
 	}
 
 	public void setALoc(Location l) {
@@ -87,21 +109,25 @@ public class Map {
 		message(ChatColor.RED + "The round has ended!");
 		aDead.clear();
 		bDead.clear();
-		Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(Main.get(), new Runnable() {
-			@Override
+		countdown = 0;
+		Timer.get().stopTasks(this);
+		updateBoard();
+		Bukkit.getScheduler().scheduleSyncDelayedTask(Main.get(), new Runnable() {
 			public void run() {
 				for (Alpha a : alpha) {
 					a.ready();
 					a.removeDeathCircle();
 					a.setDead(false);
+					teleportAPlayers();
 				}
 				for (Bravo b : bravo) {
 					b.ready();
 					b.removeDeathCircle();
 					b.setDead(false);
+					teleportBPlayers();
 				}
 			}
-		}, 20L);
+		}, 5L);
 		startNewRound();
 	}
 
@@ -234,10 +260,10 @@ public class Map {
 			if (containsBPlayer(p)) {
 				onBDeath(p);
 			}
-			if (aDead.size() >= 3) {
+			if (aDead.size() >= 1) {
 				onEliminated(1);
 			}
-			if (bDead.size() >= 3) {
+			if (bDead.size() >= 1) {
 				onEliminated(2);
 			}
 		}
@@ -319,7 +345,7 @@ public class Map {
 				return;
 			}
 			if (bWinners.size() == 1) {
-				message(ChatColor.GOLD + "Winner: " + aWinners.get(0).getPlayer().getName());
+				message(ChatColor.GOLD + "Winner: " + bWinners.get(0).getPlayer().getName());
 				stop();
 				return;
 			}
@@ -331,11 +357,17 @@ public class Map {
 		}
 		teleportAPlayers();
 		teleportBPlayers();
+		Bukkit.getScheduler().scheduleSyncDelayedTask(Main.get(), new Runnable() {
+			public void run() {
+				Timer.get().createTimer(getMap(), "endround", 90).startTimer(getMap(), "endround");
+			}
+		}, 20L);
 	}
 
 	public void stop() {
-		aWins = 0;
-		bWins = 0;
+		resetWins();
+		countdown = 0;
+		Timer.get().stopTasks(this);
 		for (Alpha a : alpha) {
 			a.restore();
 			a.removeDeathCircle();
@@ -357,6 +389,7 @@ public class Map {
 
 	public void start() {
 		setState(MapState.STARTED);
+		Timer.get().stopTasks(this);
 		for (Alpha a : alpha) {
 			a.ready();
 		}
@@ -515,13 +548,17 @@ public class Map {
 			}
 		}
 	}
-
-	public void addAWins() {
-		aWins++;
+	
+	public int getCountdown() {
+		return countdown;
 	}
 
-	public void addBWins() {
-		bWins++;
+	public int getAWins() {
+		return aWins;
+	}
+	
+	public int getBWins() {
+		return bWins;
 	}
 
 	public void resetWins() {

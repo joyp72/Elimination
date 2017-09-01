@@ -49,7 +49,7 @@ public class ScoreBoard {
 				main.setDisplaySlot(DisplaySlot.SIDEBAR);
 				main.setDisplayName(ChatColor.GOLD + "Elimination");
 				
-				Score timer = main.getScore(ChatColor.YELLOW + "Timer: ");
+				Score timer = main.getScore(ChatColor.YELLOW + "Timer: " + m.getCountdown());
 				timer.setScore(i);
 				i--;
 				
@@ -57,7 +57,7 @@ public class ScoreBoard {
 				blank2.setScore(i);
 				i--;
 				
-				Score alpha = main.getScore(ChatColor.RED + "Alpha: "); 
+				Score alpha = main.getScore(ChatColor.RED + "Alpha: (" + m.getAWins() + "/5)"); 
 				alpha.setScore(i);
 				i--;
 				for (Player aPlayer : m.getAPlayers()) {
@@ -79,7 +79,7 @@ public class ScoreBoard {
 				blank.setScore(i);
 				i--;
 				
-				Score bravo = main.getScore(ChatColor.BLUE + "Bravo: ");
+				Score bravo = main.getScore(ChatColor.BLUE + "Bravo: (" + m.getBWins() + "/5)");
 				bravo.setScore(i);
 				i--;
 				for (Player bPlayer : m.getBPlayers()) {
