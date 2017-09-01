@@ -50,22 +50,14 @@ public class Map {
 		checkState();
 
 	}
-	
+
 	public void onTimerTick(String arg, int timer) {
 		if (arg.equalsIgnoreCase("endround")) {
 			countdown = timer;
 			updateBoard();
-			if (countdown < 30) {
-				for (Player ap : getAPlayers()) {
-					ActionBars.get().addActionBar(ap, "§c§lTime left: " + countdown);
-				}
-				for (Player bp : getBPlayers()) {
-					ActionBars.get().addActionBar(bp, "§c§lTime left: " + countdown);
-				}
-			}
 		}
 	}
-	
+
 	public void onTimerEnd(String arg) {
 		if (arg.equalsIgnoreCase("endround")) {
 			endRound();
@@ -140,7 +132,7 @@ public class Map {
 					for (Alpha a : alpha) {
 						if (a.isDead()) {
 							Location l = a.getDeathLoc();
-							if (p.getLocation().distance(l) <= 1  && !getAlpha(p).isDead()) {
+							if (p.getLocation().distance(l) <= 1 && !getAlpha(p).isDead()) {
 								a.ready();
 								a.setDead(false);
 								a.getPlayer().teleport(l);
@@ -155,7 +147,7 @@ public class Map {
 					for (Bravo b : bravo) {
 						if (b.isDead()) {
 							Location l = b.getDeathLoc();
-							if (p.getLocation().distance(l) <= 1  && !getBravo(p).isDead()) {
+							if (p.getLocation().distance(l) <= 1 && !getBravo(p).isDead()) {
 								b.ready();
 								b.setDead(false);
 								b.getPlayer().teleport(l);
@@ -200,9 +192,17 @@ public class Map {
 					}
 				}
 				if (p.getHealth() - e.getDamage() < 0.5) {
+					if (e.getDamager() instanceof Player) {
+						Player damager = (Player) e.getDamager();
+						Titles.get().addTitle(damager, " ");
+						Titles.get().addSubTitle(damager, ChatColor.GRAY + "Killed " + ChatColor.DARK_RED + p.getName());
+						message(ChatColor.WHITE + p.getName() + " was killed by " + damager.getName());
+					}
 					e.setCancelled(true);
 					handleDeath(p);
 					p.setGameMode(GameMode.SPECTATOR);
+					Titles.get().addTitle(p, ChatColor.DARK_RED + "" + ChatColor.BOLD + "YOU DIED");
+					Titles.get().addSubTitle(p, ChatColor.GRAY + "Waiting for ally to revive you..");
 					if (containsAPlayer(p)) {
 						Alpha a = getAlpha(p);
 						a.setDead(true);
@@ -260,10 +260,10 @@ public class Map {
 			if (containsBPlayer(p)) {
 				onBDeath(p);
 			}
-			if (aDead.size() >= 1) {
+			if (aDead.size() >= 2) {
 				onEliminated(1);
 			}
-			if (bDead.size() >= 1) {
+			if (bDead.size() >= 2) {
 				onEliminated(2);
 			}
 		}
@@ -392,9 +392,13 @@ public class Map {
 		Timer.get().stopTasks(this);
 		for (Alpha a : alpha) {
 			a.ready();
+			Titles.get().addTitle(a.getPlayer(), ChatColor.GOLD + "" + ChatColor.BOLD + "GAME STARTED");
+			Titles.get().addSubTitle(a.getPlayer(), ChatColor.GRAY + "Eliminate your oppenants to claim victory!");
 		}
 		for (Bravo b : bravo) {
 			b.ready();
+			Titles.get().addTitle(b.getPlayer(), ChatColor.GOLD + "" + ChatColor.BOLD + "GAME STARTED");
+			Titles.get().addSubTitle(b.getPlayer(), ChatColor.GRAY + "Eliminate your oppenants to claim victory!");
 		}
 		startNewRound();
 	}
@@ -548,7 +552,7 @@ public class Map {
 			}
 		}
 	}
-	
+
 	public int getCountdown() {
 		return countdown;
 	}
@@ -556,7 +560,7 @@ public class Map {
 	public int getAWins() {
 		return aWins;
 	}
-	
+
 	public int getBWins() {
 		return bWins;
 	}
