@@ -17,6 +17,7 @@ import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.event.player.PlayerToggleSneakEvent;
 
 import com.likeapig.elimination.Main;
 
@@ -106,6 +107,15 @@ public class MapListener implements Listener {
 		Map m = MapManager.get().getMap(p);
 		if (m != null) {
 			m.handlePlayerMove(e);
+		}
+	}
+	
+	@EventHandler
+	public void onPlayerSneak(PlayerToggleSneakEvent e) {
+		Player p = e.getPlayer();
+		Map m = MapManager.get().getMap(p);
+		if (m != null) {
+			m.handleRevive(e);
 		}
 	}
 

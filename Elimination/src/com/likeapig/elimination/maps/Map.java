@@ -11,7 +11,9 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.event.player.PlayerToggleSneakEvent;
 
+import com.likeapig.elimination.Main;
 import com.likeapig.elimination.Settings;
 import com.likeapig.elimination.maps.MessageManager.MessageType;
 import com.likeapig.elimination.teams.Alpha;
@@ -84,7 +86,53 @@ public class Map {
 		message(ChatColor.RED + "The round has ended!");
 		aDead.clear();
 		bDead.clear();
+		Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(Main.get(), new Runnable() {
+			@Override
+			public void run() {
+				for (Alpha a : alpha) {
+					a.ready();
+					a.removeDeathCircle();
+					a.setDead(false);
+				}
+				for (Bravo b : bravo) {
+					b.ready();
+					b.removeDeathCircle();
+					b.setDead(false);
+				}
+			}
+		}, 20L);
 		startNewRound();
+	}
+
+	public void handleRevive(PlayerToggleSneakEvent e) {
+		Player p = e.getPlayer();
+		Map m = MapManager.get().getMap(p);
+		if (isStarted()) {
+			//if (containsAPlayer(p)) {
+				for (Alpha a : alpha) {
+					if (a.isDead()) {
+						Location l = a.getDeathLoc();
+						if (p.getLocation().subtract(0, 1, 0).getBlock().getLocation() == l.subtract(0, 1, 0).getBlock().getLocation()) {
+							p.sendMessage("dead here");
+							a.ready();
+							a.getPlayer().teleport(l);
+						}
+					}
+				}
+			//}
+			//if (containsBPlayer(p)) {
+				for (Bravo b : bravo) {
+					if (b.isDead()) {
+						Location l = b.getDeathLoc();
+						if (p.getLocation().subtract(0, 1, 0).getBlock().getLocation() == l.subtract(0, 1, 0).getBlock().getLocation()) {
+							p.sendMessage("dead here");
+							b.ready();
+							b.getPlayer().teleport(l);
+						}
+					}
+				}
+			//}
+		}
 	}
 
 	public void handleRespawn(PlayerRespawnEvent e) {
@@ -107,6 +155,14 @@ public class Map {
 			Map m = MapManager.get().getMap(p);
 			Location l = p.getLocation();
 			if (isStarted()) {
+				if (e.getDamager() instanceof Player) {
+					if (containsAPlayer(p) && containsAPlayer((Player) e.getDamager())) {
+						e.setCancelled(true);
+					}
+					if (containsBPlayer(p) && containsBPlayer((Player) e.getDamager())) {
+						e.setCancelled(true);
+					}
+				}
 				if (p.getHealth() - e.getDamage() < 0.5) {
 					e.setCancelled(true);
 					handleDeath(p);
@@ -114,11 +170,13 @@ public class Map {
 					if (containsAPlayer(p)) {
 						Alpha a = getAlpha(p);
 						a.setDead(true);
+						a.playDeathCircle(l);
 						a.setDeathLoc(l);
 					}
 					if (containsBPlayer(p)) {
 						Bravo b = getBravo(p);
 						b.setDead(true);
+						b.playDeathCircle(l);
 						b.setDeathLoc(l);
 					}
 				}
@@ -139,7 +197,6 @@ public class Map {
 					if (a.isDead()) {
 						if (to.getX() != from.getX() || to.getY() != from.getY() || to.getZ() != from.getZ()) {
 							p.teleport(from);
-							p.sendMessage("move fired");
 						}
 					}
 				}
@@ -149,7 +206,6 @@ public class Map {
 					if (b.isDead()) {
 						if (to.getX() != from.getX() || to.getY() != from.getY() || to.getZ() != from.getZ()) {
 							p.teleport(from);
-							p.sendMessage("move fired");
 						}
 					}
 				}
@@ -179,13 +235,11 @@ public class Map {
 			bWins++;
 			message("Alpha team has been eliminated!");
 			endRound();
-			return;
 		}
 		if (i == 2) {
 			aWins++;
 			message("Bravo team has been eliminated!");
 			endRound();
-			return;
 		}
 	}
 
@@ -193,11 +247,8 @@ public class Map {
 		List<Alpha> aWinners = new ArrayList<Alpha>();
 		List<Bravo> bWinners = new ArrayList<Bravo>();
 		boolean flag = aWins + bWins == 0;
-		boolean aWon = false;
-		boolean bWon = false;
 		if (aWins >= 5 || bWins >= 5) {
 			if (aWins >= 5) {
-				aWon = true;
 				for (Alpha a : alpha) {
 					if (aWinners.isEmpty()) {
 						aWinners.add(a);
@@ -205,7 +256,6 @@ public class Map {
 				}
 			}
 			if (bWins >= 5) {
-				bWon = true;
 				for (Bravo b : bravo) {
 					if (bWinners.isEmpty()) {
 						bWinners.add(b);
@@ -213,47 +263,41 @@ public class Map {
 				}
 			}
 			message(ChatColor.RED + "GAME OVER");
-			if (aWon) {
-				if (aWinners.size() > 1) {
-					String s = ChatColor.GOLD + "Winners: ";
-					for (Alpha a : aWinners) {
-						if (s.equalsIgnoreCase(ChatColor.GOLD + "Winners: ")) {
-							s = String.valueOf(s) + a.getPlayer().getName();
-						} else {
-							s = String.valueOf(s) + ", " + a.getPlayer().getName();
-						}
+			if (aWinners.size() > 1) {
+				String s = ChatColor.GOLD + "Winners: ";
+				for (Alpha a : aWinners) {
+					if (s.equalsIgnoreCase(ChatColor.GOLD + "Winners: ")) {
+						s = String.valueOf(s) + a.getPlayer().getName();
+					} else {
+						s = String.valueOf(s) + ", " + a.getPlayer().getName();
 					}
-					message(s);
-					aWon = false;
-					stop();
-					return;
-				} else {
-					message(ChatColor.GOLD + "Winner: " + aWinners.get(0).getPlayer().getName());
-					aWon = false;
-					stop();
-					return;
 				}
+				message(s);
+				stop();
+				return;
 			}
-			if (bWon) {
-				if (bWinners.size() > 1) {
-					String s = ChatColor.GOLD + "Winners: ";
-					for (Bravo b : bWinners) {
-						if (s.equalsIgnoreCase(ChatColor.GOLD + "Winners: ")) {
-							s = String.valueOf(s) + b.getPlayer().getName();
-						} else {
-							s = String.valueOf(s) + ", " + b.getPlayer().getName();
-						}
+			if (aWinners.size() == 1) {
+				message(ChatColor.GOLD + "Winner: " + aWinners.get(0).getPlayer().getName());
+				stop();
+				return;
+			}
+			if (bWinners.size() > 1) {
+				String s = ChatColor.GOLD + "Winners: ";
+				for (Bravo b : bWinners) {
+					if (s.equalsIgnoreCase(ChatColor.GOLD + "Winners: ")) {
+						s = String.valueOf(s) + b.getPlayer().getName();
+					} else {
+						s = String.valueOf(s) + ", " + b.getPlayer().getName();
 					}
-					message(s);
-					bWon = false;
-					stop();
-					return;
-				} else {
-					message(ChatColor.GOLD + "Winner: " + aWinners.get(0).getPlayer().getName());
-					bWon = false;
-					stop();
-					return;
 				}
+				message(s);
+				stop();
+				return;
+			}
+			if (bWinners.size() == 1) {
+				message(ChatColor.GOLD + "Winner: " + aWinners.get(0).getPlayer().getName());
+				stop();
+				return;
 			}
 		}
 		if (flag) {
@@ -268,8 +312,23 @@ public class Map {
 	public void stop() {
 		aWins = 0;
 		bWins = 0;
+		for (Alpha a : alpha) {
+			a.restore();
+			a.removeDeathCircle();
+			a.setDead(false);
+		}
+		for (Bravo b : bravo) {
+			b.restore();
+			b.removeDeathCircle();
+			b.setDead(false);
+		}
 		setState(MapState.WAITING);
-		kickAll(true);
+		Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(Main.get(), new Runnable() {
+			@Override
+			public void run() {
+				kickAll(true);
+			}
+		}, 10L);
 	}
 
 	public void start() {

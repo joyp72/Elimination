@@ -1,100 +1,28 @@
-package com.likeapig.elimination.teams;
+package com.likeapig.elimination.particles;
 
 import java.util.ArrayList;
-import java.util.UUID;
 
 import org.bukkit.Bukkit;
-import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.World;
-import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
 
 import com.likeapig.elimination.Main;
-import com.likeapig.elimination.maps.Map;
-import com.likeapig.elimination.particles.ParticleEffect;
 
-public class Alpha {
+public class Particles {
 
-	private UUID id;
-	private Location loc;
-	private Map map;
-	private GameMode gm;
-	private ItemStack[] inv;
-	private ItemStack[] armor;
-	private int level;
-	private float xp;
-	private Location deathLoc;
-	private boolean isDead;
-	private double health;
-	private int pe1;
+	public static Particles instance;
 
-	public Alpha(Player p, Map m) {
-		loc = p.getLocation();
-		id = p.getUniqueId();
-		map = m;
-		gm = p.getGameMode();
-		inv = p.getInventory().getContents();
-		armor = p.getInventory().getArmorContents();
-		level = p.getLevel();
-		xp = p.getExp();
-		health = p.getHealth();
+	static {
+		instance = new Particles();
 	}
 
-	public void ready() {
-		Player p = Bukkit.getPlayer(id);
-		if (p.getGameMode() != GameMode.SURVIVAL) {
-			p.setGameMode(GameMode.SURVIVAL);
-		}
-		p.getInventory().clear();
-		p.setLevel(0);
-		p.setExp(0f);
-		p.setHealth(20);
-		p.setFoodLevel(20);
-	}
-
-	public void restore() {
-		Player p = Bukkit.getPlayer(id);
-		p.teleport(loc);
-		p.setGameMode(gm);
-		p.getInventory().setContents(inv);
-		p.getInventory().setArmorContents(armor);
-		p.setLevel(level);
-		p.setExp(xp);
-		p.setHealth(health);
-	}
-
-	public Map getMap() {
-		return map;
-	}
-
-	public Player getPlayer() {
-		return Bukkit.getPlayer(id);
-	}
-
-	public Location getLoc() {
-		return loc;
-	}
-
-	public void setDeathLoc(Location l) {
-		deathLoc = l;
-	}
-
-	public Location getDeathLoc() {
-		return deathLoc;
-	}
-
-	public boolean isDead() {
-		return isDead;
-	}
-
-	public void setDead(boolean b) {
-		isDead = b;
+	public static Particles get() {
+		return instance;
 	}
 
 	public void playDeathCircle(Location loc) {
-		pe1 = Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(Main.get(), new Runnable() {
+		Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(Main.get(), new Runnable() {
 
 			int i = 0;
 			int p = 74;
@@ -133,10 +61,6 @@ public class Alpha {
 				}
 			}
 		}, 0L, 0L);
-	}
-	
-	public void removeDeathCircle() {
-		Bukkit.getServer().getScheduler().cancelTask(pe1);
 	}
 
 	//
