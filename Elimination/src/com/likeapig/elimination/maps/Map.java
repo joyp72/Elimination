@@ -163,6 +163,7 @@ public class Map {
 			Player p = (Player) e.getEntity();
 			Map m = MapManager.get().getMap(p);
 			Location l = p.getLocation();
+			Location lt = p.getLocation().clone().add(0, 2, 0);
 			if (isStarted()) {
 				if (e.getDamager() instanceof Player) {
 					if (containsAPlayer(p) && containsAPlayer((Player) e.getDamager())) {
@@ -190,6 +191,7 @@ public class Map {
 						b.setDeathLoc(l);
 						updateBoard();
 					}
+					p.teleport(lt);
 				}
 			}
 		}
@@ -462,6 +464,7 @@ public class Map {
 			alpha.remove(a);
 			updateBoard();
 			a.removeDeathCircle();
+			a.removeNameTag();
 			ScoreBoard.get().removeSB(p);
 			if (state.equals(MapState.STARTED) && getNumberOfAPlayers() < 1) {
 				stop();
@@ -477,6 +480,7 @@ public class Map {
 			bravo.remove(b);
 			updateBoard();
 			b.removeDeathCircle();
+			b.removeNameTag();
 			ScoreBoard.get().removeSB(p);
 			if (state.equals(MapState.STARTED) && getNumberOfBPlayers() < 1) {
 				stop();

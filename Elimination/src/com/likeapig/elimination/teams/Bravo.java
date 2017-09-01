@@ -6,14 +6,19 @@ import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.util.Vector;
 
 import com.likeapig.elimination.Main;
 import com.likeapig.elimination.maps.Map;
 import com.likeapig.elimination.particles.ParticleEffect;
+
+import net.md_5.bungee.api.ChatColor;
 
 public class Bravo {
 	
@@ -28,6 +33,7 @@ public class Bravo {
 	private Location deathLoc;
 	private boolean isDead;
 	private double health;
+	private ArmorStand AS;
 	private int pe1;
 	
 	public Bravo(Player p, Map m) {
@@ -52,6 +58,7 @@ public class Bravo {
 		p.setExp(0f);
 		p.setHealth(20);
 		p.setFoodLevel(20);
+		removeNameTag();
 	}
 	
 	public void restore() {
@@ -92,7 +99,40 @@ public class Bravo {
 		isDead = b;
 	}
 	
+	public void addNameTag(Location loc) {
+		Location l = loc.clone();
+		
+		ItemStack head = new ItemStack(Material.SKULL_ITEM, 1, (short) 3);
+		{
+			SkullMeta hmeta = (SkullMeta) head.getItemMeta();
+			hmeta.setOwner(getPlayer().getName());
+			head.setItemMeta(hmeta);
+		}
+		
+		AS = l.getWorld().spawn(loc, ArmorStand.class);
+		AS.setGravity(true);
+		AS.setCollidable(false);
+		AS.setVisible(false);
+		AS.setInvulnerable(true);
+		AS.setCustomNameVisible(true);
+		AS.setCustomName(ChatColor.BLUE + getPlayer().getName());
+		AS.setSilent(true);
+		AS.setGliding(false);
+		AS.setCanPickupItems(false);
+		AS.setHelmet(head);
+		AS.setSmall(true);
+		AS.setAI(false);
+	}
+	
+	public void removeNameTag() {
+		if (AS != null) {
+			AS.remove();
+		}
+	}
+	
 	public void playDeathCircle(Location loc) {
+		
+		addNameTag(loc);
 		pe1 = Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(Main.get(), new Runnable() {
 
 			int i = 0;
@@ -102,6 +142,11 @@ public class Bravo {
 
 			@Override
 			public void run() {
+				
+				if (AS.getLocation().getX() != loc.getX() || AS.getLocation().getY() != loc.getY() || AS.getLocation().getZ() != loc.getZ()) {
+					AS.teleport(loc);
+				}
+				
 				final ArrayList<Location> locs = getCircle(l, 1, 75);
 				final ArrayList<Location> locs2 = getCircleReverse(l, 1, 75);
 				final float speed = 0.1f;
@@ -109,10 +154,15 @@ public class Bravo {
 				final Vector v2 = locs2.get(i).toVector().subtract(l.toVector()).normalize();
 				final Vector v3 = locs.get(p).toVector().subtract(l.toVector()).normalize();
 				final Vector v4 = locs2.get(p).toVector().subtract(l.toVector()).normalize();
-				ParticleEffect.INSTANT_SPELL.display(v.multiply(-2), speed, locs.get(i), 100.0);
-				ParticleEffect.INSTANT_SPELL.display(v2.multiply(-2), speed, locs2.get(i), 100.0);
-				ParticleEffect.INSTANT_SPELL.display(v3.multiply(-2), speed, locs.get(p), 100.0);
-				ParticleEffect.INSTANT_SPELL.display(v4.multiply(-2), speed, locs2.get(p), 100.0);
+				//ParticleEffect.INSTANT_SPELL.display(v.multiply(-2), speed, locs.get(i), 100.0);
+				//ParticleEffect.INSTANT_SPELL.display(v2.multiply(-2), speed, locs2.get(i), 100.0);
+				//ParticleEffect.INSTANT_SPELL.display(v3.multiply(-2), speed, locs.get(p), 100.0);
+				//ParticleEffect.INSTANT_SPELL.display(v4.multiply(-2), speed, locs2.get(p), 100.0);
+				displayColoredParticle(locs.get(i), "0000FF");
+				displayColoredParticle(locs2.get(i), "0000FF");
+				displayColoredParticle(locs.get(p), "0000FF");
+				displayColoredParticle(locs2.get(p), "0000FF");
+				
 				++i;
 				++f;
 				--p;
@@ -128,7 +178,8 @@ public class Bravo {
 
 				final ArrayList<Location> locs3 = getCircle(l, 1, 75);
 				for (final Location ia : locs3) {
-					ParticleEffect.INSTANT_SPELL.display(0.0f, 0.0f, 0.0f, 0.0f, 1, ia, 100.0);
+					//ParticleEffect.INSTANT_SPELL.display(0.0f, 0.0f, 0.0f, 0.0f, 1, ia, 100.0);
+					displayColoredParticle(ia, "0000FF");
 				}
 			}
 		}, 0L, 0L);
