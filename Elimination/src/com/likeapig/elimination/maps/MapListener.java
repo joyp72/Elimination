@@ -1,5 +1,7 @@
 package com.likeapig.elimination.maps;
 
+import javax.swing.plaf.basic.BasicInternalFrameTitlePane.MoveAction;
+
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -11,6 +13,7 @@ import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
@@ -85,6 +88,26 @@ public class MapListener implements Listener {
 			e.setCancelled(true);
 		}
 	}
+	
+	@EventHandler
+	public void onPlayerFakeDeath(EntityDamageByEntityEvent e) {
+		if (e.getEntity() instanceof Player) {
+			Player p = (Player) e.getEntity();
+			Map m = MapManager.get().getMap(p);
+			if (m != null) {
+				m.handleFakeDeath(e);
+			}
+		}
+	}
+	
+	@EventHandler
+	public void onPlayerMove(PlayerMoveEvent e) {
+		Player p = e.getPlayer();
+		Map m = MapManager.get().getMap(p);
+		if (m != null) {
+			m.handlePlayerMove(e);
+		}
+	}
 
 	@EventHandler
 	public void onPlayerRespawn(PlayerRespawnEvent e) {
@@ -97,14 +120,6 @@ public class MapListener implements Listener {
 					m.handleRespawn(e);
 				}
 			}, 20L);
-		}
-	}
-
-	@EventHandler
-	public void onPlayerDeath(PlayerDeathEvent e) {
-		Map m = MapManager.get().getMap(e.getEntity());
-		if (m != null) {
-			m.handleDeath(e);
 		}
 	}
 

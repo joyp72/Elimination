@@ -21,6 +21,7 @@ public class Bravo {
 	private int level;
 	private float xp;
 	private Location deathLoc;
+	private boolean isDead;
 	
 	public Bravo(Player p, Map m) {
 		loc = p.getLocation();
@@ -71,6 +72,13 @@ public class Bravo {
 	
 	public Location getDeathLoc() {
 		return deathLoc;
+	}
+	public boolean isDead() {
+		return isDead;
+	}
+	
+	public void setDead(boolean b) {
+		isDead = b;
 	}
 
 }

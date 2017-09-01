@@ -4,10 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 
 import com.likeapig.elimination.Settings;
@@ -99,23 +101,74 @@ public class Map {
 		}
 	}
 
-	public void handleDeath(PlayerDeathEvent e) {
-		Player p = e.getEntity();
+	public void handleFakeDeath(EntityDamageByEntityEvent e) {
+		if (e.getEntity() instanceof Player) {
+			Player p = (Player) e.getEntity();
+			Map m = MapManager.get().getMap(p);
+			Location l = p.getLocation();
+			if (isStarted()) {
+				if (p.getHealth() - e.getDamage() < 0.5) {
+					e.setCancelled(true);
+					handleDeath(p);
+					p.setGameMode(GameMode.SPECTATOR);
+					if (containsAPlayer(p)) {
+						Alpha a = getAlpha(p);
+						a.setDead(true);
+						a.setDeathLoc(l);
+					}
+					if (containsBPlayer(p)) {
+						Bravo b = getBravo(p);
+						b.setDead(true);
+						b.setDeathLoc(l);
+					}
+				}
+			}
+		}
+	}
+
+	public void handlePlayerMove(PlayerMoveEvent e) {
+		Player p = e.getPlayer();
+		Map m = MapManager.get().getMap(p);
+		Location from = e.getFrom();
+		Location to = e.getTo();
+		if (m != null) {
+			if (isStarted()) {
+				if (containsAPlayer(p)) {
+					Alpha a = getAlpha(p);
+					Location l = a.getDeathLoc();
+					if (a.isDead()) {
+						if (to.getX() != from.getX() || to.getY() != from.getY() || to.getZ() != from.getZ()) {
+							p.teleport(from);
+							p.sendMessage("move fired");
+						}
+					}
+				}
+				if (containsBPlayer(p)) {
+					Bravo b = getBravo(p);
+					Location l = b.getDeathLoc();
+					if (b.isDead()) {
+						if (to.getX() != from.getX() || to.getY() != from.getY() || to.getZ() != from.getZ()) {
+							p.teleport(from);
+							p.sendMessage("move fired");
+						}
+					}
+				}
+			}
+		}
+	}
+
+	public void handleDeath(Player p) {
 		if (isStarted()) {
 			if (containsAPlayer(p)) {
-				Alpha a = getAlpha(p);
-				a.setDeathLoc(p.getLocation());
 				onADeath(p);
 			}
 			if (containsBPlayer(p)) {
-				Bravo b = getBravo(p);
-				b.setDeathLoc(p.getLocation());
 				onBDeath(p);
 			}
-			if (aDead.size() >= 1) {
+			if (aDead.size() >= 3) {
 				onEliminated(1);
 			}
-			if (bDead.size() >= 1) {
+			if (bDead.size() >= 3) {
 				onEliminated(2);
 			}
 		}
@@ -142,8 +195,8 @@ public class Map {
 		boolean flag = aWins + bWins == 0;
 		boolean aWon = false;
 		boolean bWon = false;
-		if (aWins >= 1 || bWins >= 1) {
-			if (aWins >= 1) {
+		if (aWins >= 5 || bWins >= 5) {
+			if (aWins >= 5) {
 				aWon = true;
 				for (Alpha a : alpha) {
 					if (aWinners.isEmpty()) {
@@ -151,7 +204,7 @@ public class Map {
 					}
 				}
 			}
-			if (bWins >= 1) {
+			if (bWins >= 5) {
 				bWon = true;
 				for (Bravo b : bravo) {
 					if (bWinners.isEmpty()) {

@@ -11,7 +11,7 @@ import org.bukkit.inventory.ItemStack;
 import com.likeapig.elimination.maps.Map;
 
 public class Alpha {
-	
+
 	private UUID id;
 	private Location loc;
 	private Map map;
@@ -21,7 +21,8 @@ public class Alpha {
 	private int level;
 	private float xp;
 	private Location deathLoc;
-	
+	private boolean isDead;
+
 	public Alpha(Player p, Map m) {
 		loc = p.getLocation();
 		id = p.getUniqueId();
@@ -32,7 +33,7 @@ public class Alpha {
 		level = p.getLevel();
 		xp = p.getExp();
 	}
-	
+
 	public void ready() {
 		Player p = Bukkit.getPlayer(id);
 		if (p.getGameMode() != GameMode.SURVIVAL) {
@@ -42,7 +43,7 @@ public class Alpha {
 		p.setLevel(0);
 		p.setExp(0f);
 	}
-	
+
 	public void restore() {
 		Player p = Bukkit.getPlayer(id);
 		p.teleport(loc);
@@ -52,25 +53,33 @@ public class Alpha {
 		p.setLevel(level);
 		p.setExp(xp);
 	}
-	
+
 	public Map getMap() {
 		return map;
 	}
-	
+
 	public Player getPlayer() {
 		return Bukkit.getPlayer(id);
 	}
-	
+
 	public Location getLoc() {
 		return loc;
 	}
-	
+
 	public void setDeathLoc(Location l) {
 		deathLoc = l;
 	}
-	
+
 	public Location getDeathLoc() {
 		return deathLoc;
+	}
+
+	public boolean isDead() {
+		return isDead;
+	}
+
+	public void setDead(boolean b) {
+		isDead = b;
 	}
 
 }
