@@ -35,6 +35,7 @@ public class Bravo {
 	private double health;
 	private ArmorStand AS;
 	private int pe1;
+	private int cdStage;
 	
 	public Bravo(Player p, Map m) {
 		loc = p.getLocation();
@@ -46,6 +47,7 @@ public class Bravo {
 		level = p.getLevel();
 		xp = p.getExp();
 		health = p.getHealth();
+		cdStage = 1;
 	}
 	
 	public void ready() {
@@ -91,6 +93,15 @@ public class Bravo {
 	public Location getDeathLoc() {
 		return deathLoc;
 	}
+	
+	public int getCDStage() {
+		return cdStage;
+	}
+	
+	public void setCDStage(int i) {
+		cdStage = i;
+	}
+	
 	public boolean isDead() {
 		return isDead;
 	}

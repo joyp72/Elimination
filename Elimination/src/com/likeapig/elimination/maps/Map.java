@@ -207,8 +207,30 @@ public class Map {
 	public void handleRevive(PlayerToggleSneakEvent e) {
 		Player p = e.getPlayer();
 		Map m = MapManager.get().getMap(p);
+		boolean charged = false;
+		boolean revive = false;
+		long start;
 		if (isStarted()) {
 			if (containsAPlayer(p)) {
+				start = System.currentTimeMillis();
+				if (!charged && !revive) {
+					if (!p.isSneaking()) {
+						return;
+					}
+					Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(Main.get(), new Runnable() {
+						@Override
+						public void run() {
+							boolean revive = false;
+							if (System.currentTimeMillis() - start > 3000) {
+								revive = true;
+								Bukkit.getServer().broadcastMessage("set revive true");
+							}
+						}
+					}, 0L, 10L);
+				}
+				if (revive) {
+					Bukkit.getServer().broadcastMessage("revive");
+				}
 				if (p.isSneaking()) {
 					for (Alpha a : alpha) {
 						if (a.isDead()) {

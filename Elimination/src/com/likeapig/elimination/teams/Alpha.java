@@ -35,6 +35,7 @@ public class Alpha {
 	private double health;
 	private ArmorStand AS;
 	private int pe1;
+	private int cdStage;
 
 	public Alpha(Player p, Map m) {
 		loc = p.getLocation();
@@ -46,6 +47,7 @@ public class Alpha {
 		level = p.getLevel();
 		xp = p.getExp();
 		health = p.getHealth();
+		cdStage = 1;
 	}
 
 	public void ready() {
@@ -90,6 +92,14 @@ public class Alpha {
 
 	public Location getDeathLoc() {
 		return deathLoc;
+	}
+	
+	public int getCDStage() {
+		return cdStage;
+	}
+	
+	public void setCDStage(int i) {
+		cdStage = i;
 	}
 
 	public boolean isDead() {
