@@ -39,6 +39,9 @@ public class Map {
 	private int c2;
 	private int c3;
 	private int id1;
+	private Cuboid cuboid;
+	private Location loc1;
+	private Location loc2;
 
 	public Map(String n) {
 		name = n;
@@ -52,6 +55,9 @@ public class Map {
 		aDead = new ArrayList<Player>();
 		bDead = new ArrayList<Player>();
 		loadFromConfig();
+		if (loc1 != null && loc2 != null) {
+			cuboid = new Cuboid(loc1, loc2);
+		}
 		saveToConfig();
 		checkState();
 
@@ -120,12 +126,30 @@ public class Map {
 		saveToConfig();
 	}
 
+	public void setLoc1(Location l) {
+		loc1 = l;
+		checkState();
+		saveToConfig();
+	}
+
+	public void setLoc2(Location l) {
+		loc2 = l;
+		checkState();
+		saveToConfig();
+	}
+
 	public void saveToConfig() {
 		if (aLoc != null) {
 			Settings.get().set("maps." + getName() + ".aloc", LocationUtils.locationToString(aLoc));
 		}
 		if (bLoc != null) {
 			Settings.get().set("maps." + getName() + ".bloc", LocationUtils.locationToString(bLoc));
+		}
+		if (loc1 != null) {
+			Settings.get().set("maps." + getName() + ".loc1", LocationUtils.locationToString(loc1));
+		}
+		if (loc2 != null) {
+			Settings.get().set("maps." + getName() + ".loc2", LocationUtils.locationToString(loc2));
 		}
 	}
 
@@ -138,6 +162,14 @@ public class Map {
 		if (s.get("maps." + getName() + ".bloc") != null) {
 			String s2 = s.get("maps." + getName() + ".bloc");
 			bLoc = LocationUtils.stringToLocation(s2);
+		}
+		if (s.get("maps." + getName() + ".loc1") != null) {
+			String s2 = s.get("maps." + getName() + ".loc1");
+			loc1 = LocationUtils.stringToLocation(s2);
+		}
+		if (s.get("maps." + getName() + ".loc2") != null) {
+			String s2 = s.get("maps." + getName() + ".loc2");
+			loc2 = LocationUtils.stringToLocation(s2);
 		}
 	}
 
@@ -384,6 +416,9 @@ public class Map {
 	}
 
 	public void startNewRound() {
+		if (loc1 != null && loc2 != null) {
+			cuboid.restoreBackup();
+		}
 		List<Alpha> aWinners = new ArrayList<Alpha>();
 		List<Bravo> bWinners = new ArrayList<Bravo>();
 		boolean flag = aWins + bWins == 0;
@@ -473,6 +508,9 @@ public class Map {
 	}
 
 	public void stop() {
+		if (loc1 != null && loc2 != null) {
+			cuboid.restoreBackup();
+		}
 		resetWins();
 		countdown = 0;
 		aDead.clear();
@@ -498,6 +536,9 @@ public class Map {
 	}
 
 	public void start() {
+		if (loc1 != null && loc2 != null) {
+			cuboid.save();
+		}
 		setState(MapState.STARTED);
 		Timer.get().stopTasks(this);
 		for (Alpha a : alpha) {
@@ -563,6 +604,12 @@ public class Map {
 			flag = true;
 		}
 		if (bLoc == null) {
+			flag = true;
+		}
+		if (loc1 == null) {
+			flag = true;
+		}
+		if (loc2 == null) {
 			flag = true;
 		}
 		if (flag) {

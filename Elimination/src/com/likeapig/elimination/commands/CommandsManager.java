@@ -40,6 +40,8 @@ public class CommandsManager implements CommandExecutor {
 		cmds.add(new Start());
 		cmds.add(new Stop());
 		cmds.add(new Test());
+		cmds.add(new SetLoc1());
+		cmds.add(new SetLoc2());
 	}
 
 	public boolean onCommand(CommandSender sender, Command cmd, String arg2, String[] args) {
