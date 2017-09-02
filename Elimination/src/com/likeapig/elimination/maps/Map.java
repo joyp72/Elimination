@@ -8,6 +8,7 @@ import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerToggleSneakEvent;
@@ -191,7 +192,9 @@ public class Map {
 						}
 					}
 				}
-				if (containsBPlayer(p)) {
+			}
+			if (containsBPlayer(p)) {
+				if (p.isSneaking()) {
 					for (Bravo b : bravo) {
 						if (b.isDead()) {
 							Location l = b.getDeathLoc();
@@ -224,12 +227,47 @@ public class Map {
 		}
 	}
 
+	public void handleFakeDeathE(EntityDamageEvent e) {
+		if (e.getEntity() instanceof Player) {
+			Player p = (Player) e.getEntity();
+			Map m = MapManager.get().getMap(p);
+			Location l = p.getLocation();
+			if (!isStarted()) {
+				e.setCancelled(true);
+			}
+			if (isStarted()) {
+				if (p.getHealth() - e.getDamage() < 0.5) {
+					message(ChatColor.WHITE + p.getName() + " Died.");
+					e.setCancelled(true);
+					handleDeath(p);
+					p.setGameMode(GameMode.SPECTATOR);
+					Titles.get().addTitle(p, ChatColor.DARK_RED + "" + ChatColor.BOLD + "YOU DIED");
+					Titles.get().addSubTitle(p, ChatColor.GRAY + "Wait for an ally to revive you..");
+					if (containsAPlayer(p)) {
+						Alpha a = getAlpha(p);
+						a.setDead(true);
+						a.playDeathCircle(l);
+						a.setDeathLoc(l);
+						updateBoard();
+					}
+					if (containsBPlayer(p)) {
+						Bravo b = getBravo(p);
+						b.setDead(true);
+						b.playDeathCircle(l);
+						b.setDeathLoc(l);
+						updateBoard();
+					}
+					p.teleport(l);
+				}
+			}
+		}
+	}
+
 	public void handleFakeDeath(EntityDamageByEntityEvent e) {
 		if (e.getEntity() instanceof Player) {
 			Player p = (Player) e.getEntity();
 			Map m = MapManager.get().getMap(p);
 			Location l = p.getLocation();
-			Location lt = p.getLocation().clone().add(0, 2, 0);
 			if (!isStarted()) {
 				e.setCancelled(true);
 			}
@@ -269,7 +307,7 @@ public class Map {
 						b.setDeathLoc(l);
 						updateBoard();
 					}
-					p.teleport(lt);
+					p.teleport(l);
 				}
 			}
 		}
@@ -312,10 +350,10 @@ public class Map {
 			if (containsBPlayer(p)) {
 				onBDeath(p);
 			}
-			if (aDead.size() >= 1) {
+			if (aDead.size() >= 3) {
 				onEliminated(1);
 			}
-			if (bDead.size() >= 1) {
+			if (bDead.size() >= 3) {
 				onEliminated(2);
 			}
 		}
@@ -423,12 +461,12 @@ public class Map {
 			}
 		}, 20L);
 	}
-	
+
 	public void titleGameWon(Player p) {
 		Titles.get().addTitle(p, ChatColor.DARK_RED + "" + ChatColor.BOLD + "GAME OVER");
 		Titles.get().addSubTitle(p, ChatColor.GRAY + "YOUR TEAM WON!");
 	}
-	
+
 	public void titleGameLost(Player p) {
 		Titles.get().addTitle(p, ChatColor.DARK_RED + "" + ChatColor.BOLD + "GAME OVER");
 		Titles.get().addSubTitle(p, ChatColor.GRAY + "YOUR TEAM LOST!");

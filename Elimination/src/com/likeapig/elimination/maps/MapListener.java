@@ -93,14 +93,20 @@ public class MapListener implements Listener {
 			e.setCancelled(true);
 		}
 	}
-	
+
 	@EventHandler
 	public void onPlayerFakeDeathE(EntityDamageEvent e) {
 		if (e.getEntity() instanceof Player) {
-			
+			Player p = (Player) e.getEntity();
+			Map m = MapManager.get().getMap(p);
+			if (m != null) {
+				if (!(e instanceof EntityDamageByEntityEvent)) {
+					m.handleFakeDeathE(e);
+				}
+			}
 		}
 	}
-	
+
 	@EventHandler
 	public void onPlayerFakeDeath(EntityDamageByEntityEvent e) {
 		if (e.getEntity() instanceof Player) {
@@ -111,7 +117,7 @@ public class MapListener implements Listener {
 			}
 		}
 	}
-	
+
 	@EventHandler
 	public void onPlayerMove(PlayerMoveEvent e) {
 		Player p = e.getPlayer();
@@ -120,7 +126,7 @@ public class MapListener implements Listener {
 			m.handlePlayerMove(e);
 		}
 	}
-	
+
 	@EventHandler
 	public void onDeadInteract(PlayerInteractEntityEvent e) {
 		Player p = e.getPlayer();
@@ -140,7 +146,7 @@ public class MapListener implements Listener {
 			}
 		}
 	}
-	
+
 	@EventHandler
 	public void onPlayerSneak(PlayerToggleSneakEvent e) {
 		Player p = e.getPlayer();
@@ -149,7 +155,7 @@ public class MapListener implements Listener {
 			m.handleRevive(e);
 		}
 	}
-	
+
 	@EventHandler
 	public void onPlayerInteract(PlayerInteractAtEntityEvent e) {
 		Player p = e.getPlayer();
