@@ -10,7 +10,7 @@ import com.likeapig.elimination.maps.MessageManager.MessageType;
 public class Stop extends Commands {
 	
 	public Stop() {
-		super("elimination.default", "Stop a game", "", new String[] { "" });
+		super("elimination.admin", "Stop a game", "", new String[] { "" });
 	}
 	
 	@Override

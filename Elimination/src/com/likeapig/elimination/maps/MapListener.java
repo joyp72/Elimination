@@ -1,13 +1,18 @@
 package com.likeapig.elimination.maps;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.block.Sign;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.block.SignChangeEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
@@ -15,11 +20,13 @@ import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerToggleSneakEvent;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import com.likeapig.elimination.Main;
 import com.likeapig.elimination.teams.Alpha;
@@ -151,6 +158,9 @@ public class MapListener implements Listener {
 	public void onPlayerSneak(PlayerToggleSneakEvent e) {
 		Player p = e.getPlayer();
 		Map m = MapManager.get().getMap(p);
+		if (e.isCancelled()) {
+			return;
+		}
 		if (m != null) {
 			m.handleRevive(e);
 		}
@@ -163,6 +173,68 @@ public class MapListener implements Listener {
 		Map m = MapManager.get().getMap(p);
 		if (m != null) {
 			if (entity instanceof ArmorStand) {
+				e.setCancelled(true);
+			}
+		}
+	}
+
+	@EventHandler
+	public void SignEvent(final SignChangeEvent event) {
+		if (event.getPlayer().hasPermission("elimination.admin")
+				&& event.getLine(0).equalsIgnoreCase("[eliminationa]")) {
+			if (MapManager.get().getMap(event.getLine(1)) != null) {
+				MessageManager.get().message(event.getPlayer(), "Sign created !");
+				final String map = event.getLine(1);
+				final Location loc = event.getBlock().getLocation();
+				new BukkitRunnable() {
+					public void run() {
+						MapManager.get().getMap(map).registerASign(loc);
+					}
+				}.runTaskLater(Main.get(), 10L);
+				return;
+			}
+		}
+		if (event.getPlayer().hasPermission("elimination.admin")
+				&& event.getLine(0).equalsIgnoreCase("[eliminationb]")) {
+			if (MapManager.get().getMap(event.getLine(1)) != null) {
+				MessageManager.get().message(event.getPlayer(), "Sign created !");
+				final String map = event.getLine(1);
+				final Location loc = event.getBlock().getLocation();
+				new BukkitRunnable() {
+					public void run() {
+						MapManager.get().getMap(map).registerBSign(loc);
+					}
+				}.runTaskLater(Main.get(), 10L);
+				return;
+			}
+		}
+
+	}
+
+	@EventHandler
+	public void onPlayerInteract(final PlayerInteractEvent e) {
+		final Player p = e.getPlayer();
+		final Map m = MapManager.get().getMap(p);
+		if (p.hasPermission("elimination.default") && (e.getAction().equals((Object) Action.RIGHT_CLICK_BLOCK))) {
+			if (m == null) {
+				if (e.getClickedBlock().getType().equals((Object) Material.WALL_SIGN)
+						|| e.getClickedBlock().getType().equals((Object) Material.SIGN_POST)) {
+					final Sign s = (Sign) e.getClickedBlock().getState();
+					if (s.getLine(0).trim().equalsIgnoreCase(ChatColor.GOLD + "Elimination")
+							&& s.getLine(3).length() > 0 && MapManager.get().getMap(s.getLine(3)) != null && s.getLine(2).trim().equalsIgnoreCase(ChatColor.RED + "Alpha")) {
+						final Map a2 = MapManager.get().getMap(s.getLine(3));
+						a2.addAlphaPlayer(p);
+						e.setCancelled(true);
+					}
+					if (s.getLine(0).trim().equalsIgnoreCase(ChatColor.GOLD + "Elimination")
+							&& s.getLine(3).length() > 0 && MapManager.get().getMap(s.getLine(3)) != null && s.getLine(2).trim().equalsIgnoreCase(ChatColor.BLUE + "Bravo")) {
+						final Map a2 = MapManager.get().getMap(s.getLine(3));
+						a2.addBravoPlayer(p);
+						e.setCancelled(true);
+					}
+				}
+			}
+			if (m != null) {
 				e.setCancelled(true);
 			}
 		}

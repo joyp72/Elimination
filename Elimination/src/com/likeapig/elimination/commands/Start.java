@@ -10,7 +10,7 @@ import com.likeapig.elimination.maps.MessageManager.MessageType;
 public class Start extends Commands {
 	
 	public Start() {
-		super("elimination.default", "Start a game", "", new String[] { "s" });
+		super("elimination.admin", "Start a game", "", new String[] { "s" });
 	}
 	
 	@Override

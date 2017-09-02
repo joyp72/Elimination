@@ -7,7 +7,7 @@ import com.likeapig.elimination.particles.Particles;
 public class Test extends Commands {
 	
 	public Test() {
-		super("build.admin", "Test", "", new String[] { "t" });
+		super("elimination.admin", "Test", "", new String[] { "t" });
 	}
 	
 	@Override

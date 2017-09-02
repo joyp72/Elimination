@@ -6,6 +6,7 @@ import java.util.List;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.block.Sign;
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
@@ -42,6 +43,8 @@ public class Map {
 	private Cuboid cuboid;
 	private Location loc1;
 	private Location loc2;
+	public List<Location> asigns;
+	public List<Location> bsigns;
 
 	public Map(String n) {
 		name = n;
@@ -54,6 +57,8 @@ public class Map {
 		bravo = new ArrayList<Bravo>();
 		aDead = new ArrayList<Player>();
 		bDead = new ArrayList<Player>();
+		asigns = new ArrayList<Location>();
+		bsigns = new ArrayList<Location>();
 		loadFromConfig();
 		if (loc1 != null && loc2 != null) {
 			cuboid = new Cuboid(loc1, loc2);
@@ -151,6 +156,17 @@ public class Map {
 		if (loc2 != null) {
 			Settings.get().set("maps." + getName() + ".loc2", LocationUtils.locationToString(loc2));
 		}
+		final List<String> asigns = new ArrayList<String>();
+		for (final Location l : this.asigns) {
+			asigns.add(LocationUtils.locationToString(l));
+		}
+		Settings.get().set("maps." + this.getName() + ".asigns", asigns);
+
+		final List<String> bsigns = new ArrayList<String>();
+		for (final Location l : this.bsigns) {
+			bsigns.add(LocationUtils.locationToString(l));
+		}
+		Settings.get().set("maps." + this.getName() + ".bsigns", bsigns);
 	}
 
 	public void loadFromConfig() {
@@ -164,12 +180,26 @@ public class Map {
 			bLoc = LocationUtils.stringToLocation(s2);
 		}
 		if (s.get("maps." + getName() + ".loc1") != null) {
-			String s2 = s.get("maps." + getName() + ".loc1");
-			loc1 = LocationUtils.stringToLocation(s2);
+			String s4 = s.get("maps." + getName() + ".loc1");
+			loc1 = LocationUtils.stringToLocation(s4);
 		}
 		if (s.get("maps." + getName() + ".loc2") != null) {
-			String s2 = s.get("maps." + getName() + ".loc2");
-			loc2 = LocationUtils.stringToLocation(s2);
+			String s5 = s.get("maps." + getName() + ".loc2");
+			loc2 = LocationUtils.stringToLocation(s5);
+		}
+		if (s.get("maps." + this.getName() + ".asigns") != null) {
+			final List<String> asigns = s.get("maps." + this.getName() + ".asigns");
+			for (final String s6 : asigns) {
+				final Location l = LocationUtils.stringToLocation(s6);
+				this.registerASign(l);
+			}
+		}
+		if (s.get("maps." + this.getName() + ".bsigns") != null) {
+			final List<String> bsigns = s.get("maps." + this.getName() + ".bsigns");
+			for (final String s6 : bsigns) {
+				final Location l = LocationUtils.stringToLocation(s6);
+				this.registerBSign(l);
+			}
 		}
 	}
 
@@ -207,30 +237,8 @@ public class Map {
 	public void handleRevive(PlayerToggleSneakEvent e) {
 		Player p = e.getPlayer();
 		Map m = MapManager.get().getMap(p);
-		boolean charged = false;
-		boolean revive = false;
-		long start;
 		if (isStarted()) {
 			if (containsAPlayer(p)) {
-				start = System.currentTimeMillis();
-				if (!charged && !revive) {
-					if (!p.isSneaking()) {
-						return;
-					}
-					Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(Main.get(), new Runnable() {
-						@Override
-						public void run() {
-							boolean revive = false;
-							if (System.currentTimeMillis() - start > 3000) {
-								revive = true;
-								Bukkit.getServer().broadcastMessage("set revive true");
-							}
-						}
-					}, 0L, 10L);
-				}
-				if (revive) {
-					Bukkit.getServer().broadcastMessage("revive");
-				}
 				if (p.isSneaking()) {
 					for (Alpha a : alpha) {
 						if (a.isDead()) {
@@ -396,6 +404,52 @@ public class Map {
 		}
 	}
 
+	public void registerBSign(final Location loc) {
+		if (!this.bsigns.contains(loc) && loc.getBlock().getState() instanceof Sign) {
+			this.bsigns.add(loc);
+			this.updateBasigns();
+		}
+		this.saveToConfig();
+	}
+
+	public void updateBasigns() {
+		for (final Location l : this.bsigns) {
+			if (l.getBlock().getState() instanceof Sign) {
+				final Sign s = (Sign) l.getBlock().getState();
+				s.setLine(0, ChatColor.GOLD + "Elimination");
+				s.setLine(3, this.getName());
+				s.setLine(2, ChatColor.BLUE + "Bravo");
+				s.setLine(1, ChatColor.GREEN + "[JOIN]");
+				s.update();
+			} else {
+				this.bsigns.remove(l);
+			}
+		}
+	}
+
+	public void registerASign(final Location loc) {
+		if (!this.asigns.contains(loc) && loc.getBlock().getState() instanceof Sign) {
+			this.asigns.add(loc);
+			this.updateAasigns();
+		}
+		this.saveToConfig();
+	}
+
+	public void updateAasigns() {
+		for (final Location l : this.asigns) {
+			if (l.getBlock().getState() instanceof Sign) {
+				final Sign s = (Sign) l.getBlock().getState();
+				s.setLine(0, ChatColor.GOLD + "Elimination");
+				s.setLine(3, this.getName());
+				s.setLine(2, ChatColor.RED + "Alpha");
+				s.setLine(1, ChatColor.GREEN + "[JOIN]");
+				s.update();
+			} else {
+				this.asigns.remove(l);
+			}
+		}
+	}
+
 	public void handleDeath(Player p) {
 		if (isStarted()) {
 			if (containsAPlayer(p)) {
@@ -404,10 +458,10 @@ public class Map {
 			if (containsBPlayer(p)) {
 				onBDeath(p);
 			}
-			if (aDead.size() >= 3) {
+			if (aDead.size() >= 2) {
 				onEliminated(1);
 			}
-			if (bDead.size() >= 3) {
+			if (bDead.size() >= 2) {
 				onEliminated(2);
 			}
 		}
@@ -646,28 +700,28 @@ public class Map {
 	}
 
 	public void addAlphaPlayer(Player p) {
-		if (!containsAPlayer(p) && state.canJoin() && getNumberOfAPlayers() <= 3) {
+		if (!containsAPlayer(p) && state.canJoin() && getNumberOfAPlayers() <= 2) {
 			Alpha a = new Alpha(p, this);
 			alpha.add(a);
 			p.teleport(aLoc);
 			updateBoard();
 			message(ChatColor.GREEN + p.getName() + " joined the Map.");
 			MessageManager.get().message(p, "You joined Alpha team.");
-			if (state.equals(MapState.WAITING) && getNumberOfAPlayers() == 3) {
+			if (state.equals(MapState.WAITING) && getNumberOfAPlayers() == 2) {
 				start();
 			}
 		}
 	}
 
 	public void addBravoPlayer(Player p) {
-		if (!containsBPlayer(p) && getNumberOfBPlayers() <= 3) {
+		if (!containsBPlayer(p) && getNumberOfBPlayers() <= 2) {
 			Bravo b = new Bravo(p, this);
 			bravo.add(b);
 			p.teleport(bLoc);
 			updateBoard();
 			message(ChatColor.GREEN + p.getName() + " joined the game.");
 			MessageManager.get().message(p, "You joined Bravo team.");
-			if (state.equals(MapState.WAITING) && getNumberOfBPlayers() == 3) {
+			if (state.equals(MapState.WAITING) && getNumberOfBPlayers() == 2) {
 				start();
 			}
 		}
