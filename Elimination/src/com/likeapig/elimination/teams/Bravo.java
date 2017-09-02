@@ -12,6 +12,7 @@ import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.SkullMeta;
+import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.util.Vector;
 
 import com.likeapig.elimination.Main;
@@ -36,6 +37,7 @@ public class Bravo {
 	private ArmorStand AS;
 	private int pe1;
 	private int cdStage;
+	private Scoreboard sb;
 	
 	public Bravo(Player p, Map m) {
 		loc = p.getLocation();
@@ -48,6 +50,7 @@ public class Bravo {
 		xp = p.getExp();
 		health = p.getHealth();
 		cdStage = 1;
+		sb = p.getScoreboard();
 	}
 	
 	public void ready() {
@@ -72,6 +75,7 @@ public class Bravo {
 		p.setLevel(level);
 		p.setExp(xp);
 		p.setHealth(health);
+		p.setScoreboard(sb);
 	}
 	
 	public Map getMap() {

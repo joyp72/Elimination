@@ -12,6 +12,7 @@ import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.SkullMeta;
+import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.util.Vector;
 
 import com.likeapig.elimination.Main;
@@ -36,6 +37,7 @@ public class Alpha {
 	private ArmorStand AS;
 	private int pe1;
 	private int cdStage;
+	private Scoreboard sb;
 
 	public Alpha(Player p, Map m) {
 		loc = p.getLocation();
@@ -48,6 +50,7 @@ public class Alpha {
 		xp = p.getExp();
 		health = p.getHealth();
 		cdStage = 1;
+		sb = p.getScoreboard();
 	}
 
 	public void ready() {
@@ -72,6 +75,7 @@ public class Alpha {
 		p.setLevel(level);
 		p.setExp(xp);
 		p.setHealth(health);
+		p.setScoreboard(sb);
 	}
 
 	public Map getMap() {
