@@ -9,6 +9,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
@@ -90,6 +91,13 @@ public class MapListener implements Listener {
 		Player p = e.getPlayer();
 		if (MapManager.get().getMap(p) != null) {
 			e.setCancelled(true);
+		}
+	}
+	
+	@EventHandler
+	public void onPlayerFakeDeathE(EntityDamageEvent e) {
+		if (e.getEntity() instanceof Player) {
+			
 		}
 	}
 	

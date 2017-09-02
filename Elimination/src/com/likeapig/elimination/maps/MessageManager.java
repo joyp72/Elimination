@@ -13,7 +13,7 @@ public class MessageManager
     }
     
     public MessageManager() {
-        this.PREFIX = ChatColor.WHITE + "[" + ChatColor.GOLD + "Elimination" + ChatColor.WHITE + "] ";
+        this.PREFIX = ChatColor.GRAY + "[" + ChatColor.GOLD + "Elimination" + ChatColor.GRAY + "] ";
     }
     
     public static MessageManager get() {

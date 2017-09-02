@@ -35,12 +35,17 @@ public class Map {
 	private Location bLoc;
 	private MapState state;
 	private int countdown;
+	private int c2;
+	private int c3;
+	private int id1;
 
 	public Map(String n) {
 		name = n;
 		aWins = 0;
 		bWins = 0;
 		countdown = 0;
+		c2 = 0;
+		c3 = 0;
 		alpha = new ArrayList<Alpha>();
 		bravo = new ArrayList<Bravo>();
 		aDead = new ArrayList<Player>();
@@ -56,11 +61,49 @@ public class Map {
 			countdown = timer;
 			updateBoard();
 		}
+		if (arg.equalsIgnoreCase("bwins")) {
+			c2 = timer;
+			for (Player bp : getBPlayers()) {
+				Titles.get().addTitle(bp, ChatColor.WHITE + "" + ChatColor.BOLD + "0:0" + c2);
+				Titles.get().addSubTitle(bp, ChatColor.WHITE + "All enemies down!");
+			}
+			for (Player ap : getAPlayers()) {
+				Titles.get().addTitle(ap, ChatColor.WHITE + "" + ChatColor.BOLD + "0:0" + c2);
+				Titles.get().addSubTitle(ap, ChatColor.WHITE + "All allies down!");
+			}
+		}
+		if (arg.equalsIgnoreCase("awins")) {
+			c3 = timer;
+			for (Player ap : getAPlayers()) {
+				Titles.get().addTitle(ap, ChatColor.WHITE + "" + ChatColor.BOLD + "0:0" + c3);
+				Titles.get().addSubTitle(ap, ChatColor.WHITE + "All enemies down");
+			}
+			for (Player bp : getBPlayers()) {
+				Titles.get().addTitle(bp, ChatColor.WHITE + "" + ChatColor.BOLD + "0:0" + c3);
+				Titles.get().addSubTitle(bp, ChatColor.WHITE + "All allies down");
+			}
+		}
 	}
 
 	public void onTimerEnd(String arg) {
 		if (arg.equalsIgnoreCase("endround")) {
-			endRound();
+			if (isStarted()) {
+				endRound();
+			}
+		}
+		if (arg.equalsIgnoreCase("bwins")) {
+			if (aWins >= 5 || bWins >= 5) {
+				startNewRound();
+			} else {
+				endRound();
+			}
+		}
+		if (arg.equalsIgnoreCase("awins")) {
+			if (aWins >= 5 || bWins >= 5) {
+				startNewRound();
+			} else {
+				endRound();
+			}
 		}
 	}
 
@@ -103,6 +146,7 @@ public class Map {
 		bDead.clear();
 		countdown = 0;
 		Timer.get().stopTasks(this);
+		Bukkit.getServer().getScheduler().cancelTask(id1);
 		updateBoard();
 		Bukkit.getScheduler().scheduleSyncDelayedTask(Main.get(), new Runnable() {
 			public void run() {
@@ -111,12 +155,16 @@ public class Map {
 					a.removeDeathCircle();
 					a.setDead(false);
 					teleportAPlayers();
+					Titles.get().addTitle(a.getPlayer(), " ");
+					Titles.get().addSubTitle(a.getPlayer(), " ");
 				}
 				for (Bravo b : bravo) {
 					b.ready();
 					b.removeDeathCircle();
 					b.setDead(false);
 					teleportBPlayers();
+					Titles.get().addTitle(b.getPlayer(), " ");
+					Titles.get().addSubTitle(b.getPlayer(), " ");
 				}
 			}
 		}, 5L);
@@ -182,6 +230,9 @@ public class Map {
 			Map m = MapManager.get().getMap(p);
 			Location l = p.getLocation();
 			Location lt = p.getLocation().clone().add(0, 2, 0);
+			if (!isStarted()) {
+				e.setCancelled(true);
+			}
 			if (isStarted()) {
 				if (e.getDamager() instanceof Player) {
 					if (containsAPlayer(p) && containsAPlayer((Player) e.getDamager())) {
@@ -195,14 +246,15 @@ public class Map {
 					if (e.getDamager() instanceof Player) {
 						Player damager = (Player) e.getDamager();
 						Titles.get().addTitle(damager, " ");
-						Titles.get().addSubTitle(damager, ChatColor.GRAY + "Killed " + ChatColor.DARK_RED + p.getName());
+						Titles.get().addSubTitle(damager,
+								ChatColor.GRAY + "Killed " + ChatColor.DARK_RED + p.getName());
 						message(ChatColor.WHITE + p.getName() + " was killed by " + damager.getName());
 					}
 					e.setCancelled(true);
 					handleDeath(p);
 					p.setGameMode(GameMode.SPECTATOR);
 					Titles.get().addTitle(p, ChatColor.DARK_RED + "" + ChatColor.BOLD + "YOU DIED");
-					Titles.get().addSubTitle(p, ChatColor.GRAY + "Waiting for ally to revive you..");
+					Titles.get().addSubTitle(p, ChatColor.GRAY + "Wait for an ally to revive you..");
 					if (containsAPlayer(p)) {
 						Alpha a = getAlpha(p);
 						a.setDead(true);
@@ -260,10 +312,10 @@ public class Map {
 			if (containsBPlayer(p)) {
 				onBDeath(p);
 			}
-			if (aDead.size() >= 2) {
+			if (aDead.size() >= 1) {
 				onEliminated(1);
 			}
-			if (bDead.size() >= 2) {
+			if (bDead.size() >= 1) {
 				onEliminated(2);
 			}
 		}
@@ -284,12 +336,12 @@ public class Map {
 		if (i == 1) {
 			bWins++;
 			message("Alpha team has been eliminated!");
-			endRound();
+			Timer.get().createTimer(getMap(), "bwins", 5).startTimer(getMap(), "bwins");
 		}
 		if (i == 2) {
 			aWins++;
 			message("Bravo team has been eliminated!");
-			endRound();
+			Timer.get().createTimer(getMap(), "awins", 5).startTimer(getMap(), "awins");
 		}
 	}
 
@@ -300,16 +352,24 @@ public class Map {
 		if (aWins >= 5 || bWins >= 5) {
 			if (aWins >= 5) {
 				for (Alpha a : alpha) {
+					titleGameWon(a.getPlayer());
 					if (aWinners.isEmpty()) {
 						aWinners.add(a);
 					}
 				}
+				for (Bravo b : bravo) {
+					titleGameLost(b.getPlayer());
+				}
 			}
 			if (bWins >= 5) {
 				for (Bravo b : bravo) {
+					titleGameWon(b.getPlayer());
 					if (bWinners.isEmpty()) {
 						bWinners.add(b);
 					}
+				}
+				for (Alpha a : alpha) {
+					titleGameLost(a.getPlayer());
 				}
 			}
 			message(ChatColor.RED + "GAME OVER");
@@ -363,11 +423,22 @@ public class Map {
 			}
 		}, 20L);
 	}
+	
+	public void titleGameWon(Player p) {
+		Titles.get().addTitle(p, ChatColor.DARK_RED + "" + ChatColor.BOLD + "GAME OVER");
+		Titles.get().addSubTitle(p, ChatColor.GRAY + "YOUR TEAM WON!");
+	}
+	
+	public void titleGameLost(Player p) {
+		Titles.get().addTitle(p, ChatColor.DARK_RED + "" + ChatColor.BOLD + "GAME OVER");
+		Titles.get().addSubTitle(p, ChatColor.GRAY + "YOUR TEAM LOST!");
+	}
 
 	public void stop() {
 		resetWins();
 		countdown = 0;
-		Timer.get().stopTasks(this);
+		aDead.clear();
+		bDead.clear();
 		for (Alpha a : alpha) {
 			a.restore();
 			a.removeDeathCircle();
@@ -379,6 +450,7 @@ public class Map {
 			b.setDead(false);
 		}
 		setState(MapState.WAITING);
+		Timer.get().stopTasks(this);
 		Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(Main.get(), new Runnable() {
 			@Override
 			public void run() {
