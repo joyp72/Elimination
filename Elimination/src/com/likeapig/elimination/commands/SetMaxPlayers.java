@@ -7,27 +7,27 @@ import com.likeapig.elimination.maps.MapManager;
 import com.likeapig.elimination.maps.MessageManager;
 import com.likeapig.elimination.maps.MessageManager.MessageType;
 
-public class Create extends Commands {
+public class SetMaxPlayers extends Commands {
 	
-	public Create() {
-		super("elimination.admin", "Create a Map", "<name>", new String[] { "c", "createmap" });
+	public SetMaxPlayers() {
+		super("elimination.admin", "Set max players", "<map>", new String[] { "smp" });
 	}
 	
 	@Override
 	public void onCommand(Player sender, String[] args) {
 		if (args.length == 0) {
-			MessageManager.get().message(sender, "You must specify a map name.", MessageType.BAD);
+			MessageManager.get().message(sender, "You must specify a map!", MessageType.BAD);
 			return;
 		}
-		final String id = args[0];
+		String id = args[0];
 		int i = Integer.parseInt(args[1]);
 		Map m = MapManager.get().getMap(id);
-		if (m != null) {
-			MessageManager.get().message(sender, "That map already exists.", MessageType.BAD);
+		if (m == null ) {
+			MessageManager.get().message(sender, "Unknown map.", MessageType.BAD);
 			return;
 		}
-		MapManager.get().registerMap(id, i);
-		MessageManager.get().message(sender, "Map created!", MessageType.GOOD);
+		m.setMaxPlayers(i);
+		MessageManager.get().message(sender, "Set max players on " + m.getName() + " to: " + i, MessageType.GOOD);
 	}
 
 }

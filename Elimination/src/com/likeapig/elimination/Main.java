@@ -5,6 +5,7 @@ import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionDefault;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import com.likeapig.elimination.Menu.MenusListener;
 import com.likeapig.elimination.commands.CommandsManager;
 import com.likeapig.elimination.maps.Map;
 import com.likeapig.elimination.maps.MapListener;
@@ -25,6 +26,7 @@ public class Main extends JavaPlugin {
 		Settings.get().setup(this);
 		MapManager.get().setupMaps();
 		MapListener.get().setup();
+		MenusListener.get().setup();
 		
 		if (Bukkit.getPluginManager().getPermission("elimination.default") == null) {
             Bukkit.getPluginManager().addPermission(new Permission("elimination.default"));

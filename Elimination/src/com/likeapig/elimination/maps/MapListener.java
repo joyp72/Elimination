@@ -29,6 +29,7 @@ import org.bukkit.event.player.PlayerToggleSneakEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import com.likeapig.elimination.Main;
+import com.likeapig.elimination.Menu.Menus;
 import com.likeapig.elimination.teams.Alpha;
 import com.likeapig.elimination.teams.Bravo;
 
@@ -68,11 +69,13 @@ public class MapListener implements Listener {
 	}
 
 	@EventHandler
-	public void onPlayerBreakBlock(BlockBreakEvent e) {
+	public void onPlayerPlaceBlock(BlockBreakEvent e) {
 		Player p = e.getPlayer();
 		Map m = MapManager.get().getMap(p);
 		if (m != null) {
-			e.setCancelled(true);
+			if (!m.isStarted()) {
+				e.setCancelled(true);
+			}
 		}
 	}
 
@@ -181,34 +184,19 @@ public class MapListener implements Listener {
 	@EventHandler
 	public void SignEvent(final SignChangeEvent event) {
 		if (event.getPlayer().hasPermission("elimination.admin")
-				&& event.getLine(0).equalsIgnoreCase("[eliminationa]")) {
+				&& event.getLine(0).equalsIgnoreCase("[elimination]")) {
 			if (MapManager.get().getMap(event.getLine(1)) != null) {
 				MessageManager.get().message(event.getPlayer(), "Sign created !");
 				final String map = event.getLine(1);
 				final Location loc = event.getBlock().getLocation();
 				new BukkitRunnable() {
 					public void run() {
-						MapManager.get().getMap(map).registerASign(loc);
+						MapManager.get().getMap(map).registerSign(loc);
 					}
 				}.runTaskLater(Main.get(), 10L);
 				return;
 			}
 		}
-		if (event.getPlayer().hasPermission("elimination.admin")
-				&& event.getLine(0).equalsIgnoreCase("[eliminationb]")) {
-			if (MapManager.get().getMap(event.getLine(1)) != null) {
-				MessageManager.get().message(event.getPlayer(), "Sign created !");
-				final String map = event.getLine(1);
-				final Location loc = event.getBlock().getLocation();
-				new BukkitRunnable() {
-					public void run() {
-						MapManager.get().getMap(map).registerBSign(loc);
-					}
-				}.runTaskLater(Main.get(), 10L);
-				return;
-			}
-		}
-
 	}
 
 	@EventHandler
@@ -221,15 +209,10 @@ public class MapListener implements Listener {
 						|| e.getClickedBlock().getType().equals((Object) Material.SIGN_POST)) {
 					final Sign s = (Sign) e.getClickedBlock().getState();
 					if (s.getLine(0).trim().equalsIgnoreCase(ChatColor.GOLD + "Elimination")
-							&& s.getLine(3).length() > 0 && MapManager.get().getMap(s.getLine(3)) != null && s.getLine(2).trim().equalsIgnoreCase(ChatColor.RED + "Alpha")) {
-						final Map a2 = MapManager.get().getMap(s.getLine(3));
-						a2.addAlphaPlayer(p);
-						e.setCancelled(true);
-					}
-					if (s.getLine(0).trim().equalsIgnoreCase(ChatColor.GOLD + "Elimination")
-							&& s.getLine(3).length() > 0 && MapManager.get().getMap(s.getLine(3)) != null && s.getLine(2).trim().equalsIgnoreCase(ChatColor.BLUE + "Bravo")) {
-						final Map a2 = MapManager.get().getMap(s.getLine(3));
-						a2.addBravoPlayer(p);
+							&& s.getLine(3).length() > 0 && MapManager.get().getMap(s.getLine(3)) != null) {
+						final Map m2 = MapManager.get().getMap(s.getLine(3));
+						new Menus(p, m2);
+						p.openInventory(Menus.getInvTeams());
 						e.setCancelled(true);
 					}
 				}

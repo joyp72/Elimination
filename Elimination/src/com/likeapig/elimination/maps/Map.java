@@ -43,22 +43,22 @@ public class Map {
 	private Cuboid cuboid;
 	private Location loc1;
 	private Location loc2;
-	public List<Location> asigns;
-	public List<Location> bsigns;
+	public List<Location> signs;
+	public int maxPlayers;
 
-	public Map(String n) {
+	public Map(String n, int i) {
 		name = n;
 		aWins = 0;
 		bWins = 0;
 		countdown = 0;
 		c2 = 0;
 		c3 = 0;
+		maxPlayers = i;
 		alpha = new ArrayList<Alpha>();
 		bravo = new ArrayList<Bravo>();
 		aDead = new ArrayList<Player>();
 		bDead = new ArrayList<Player>();
-		asigns = new ArrayList<Location>();
-		bsigns = new ArrayList<Location>();
+		signs = new ArrayList<Location>();
 		loadFromConfig();
 		if (loc1 != null && loc2 != null) {
 			cuboid = new Cuboid(loc1, loc2);
@@ -66,6 +66,15 @@ public class Map {
 		saveToConfig();
 		checkState();
 
+	}
+
+	public void setMaxPlayers(int i) {
+		maxPlayers = i;
+		saveToConfig();
+	}
+
+	public int getMaxPlayers() {
+		return maxPlayers;
 	}
 
 	public void onTimerTick(String arg, int timer) {
@@ -144,6 +153,7 @@ public class Map {
 	}
 
 	public void saveToConfig() {
+		Settings.get().set("maps." + this.getName() + ".maxPlayers", maxPlayers);
 		if (aLoc != null) {
 			Settings.get().set("maps." + getName() + ".aloc", LocationUtils.locationToString(aLoc));
 		}
@@ -156,21 +166,19 @@ public class Map {
 		if (loc2 != null) {
 			Settings.get().set("maps." + getName() + ".loc2", LocationUtils.locationToString(loc2));
 		}
-		final List<String> asigns = new ArrayList<String>();
-		for (final Location l : this.asigns) {
-			asigns.add(LocationUtils.locationToString(l));
+		final List<String> signs = new ArrayList<String>();
+		for (final Location l : this.signs) {
+			signs.add(LocationUtils.locationToString(l));
 		}
-		Settings.get().set("maps." + this.getName() + ".asigns", asigns);
-
-		final List<String> bsigns = new ArrayList<String>();
-		for (final Location l : this.bsigns) {
-			bsigns.add(LocationUtils.locationToString(l));
-		}
-		Settings.get().set("maps." + this.getName() + ".bsigns", bsigns);
+		Settings.get().set("maps." + this.getName() + ".signs", signs);
 	}
 
 	public void loadFromConfig() {
 		Settings s = Settings.get();
+		if (s.get("maps." + this.getName() + ".maxPlayers") != null) {
+			final int i = s.get("maps." + this.getName() + ".maxPlayers");
+			maxPlayers = i;
+		}
 		if (s.get("maps." + getName() + ".aloc") != null) {
 			String s3 = s.get("maps." + getName() + ".aloc");
 			aLoc = LocationUtils.stringToLocation(s3);
@@ -187,18 +195,11 @@ public class Map {
 			String s5 = s.get("maps." + getName() + ".loc2");
 			loc2 = LocationUtils.stringToLocation(s5);
 		}
-		if (s.get("maps." + this.getName() + ".asigns") != null) {
-			final List<String> asigns = s.get("maps." + this.getName() + ".asigns");
-			for (final String s6 : asigns) {
+		if (s.get("maps." + this.getName() + ".signs") != null) {
+			final List<String> signs = s.get("maps." + this.getName() + ".signs");
+			for (final String s6 : signs) {
 				final Location l = LocationUtils.stringToLocation(s6);
-				this.registerASign(l);
-			}
-		}
-		if (s.get("maps." + this.getName() + ".bsigns") != null) {
-			final List<String> bsigns = s.get("maps." + this.getName() + ".bsigns");
-			for (final String s6 : bsigns) {
-				final Location l = LocationUtils.stringToLocation(s6);
-				this.registerBSign(l);
+				this.registerSign(l);
 			}
 		}
 	}
@@ -404,48 +405,29 @@ public class Map {
 		}
 	}
 
-	public void registerBSign(final Location loc) {
-		if (!this.bsigns.contains(loc) && loc.getBlock().getState() instanceof Sign) {
-			this.bsigns.add(loc);
-			this.updateBasigns();
+	public void registerSign(final Location loc) {
+		if (!this.signs.contains(loc) && loc.getBlock().getState() instanceof Sign) {
+			this.signs.add(loc);
+			this.updateSigns();
 		}
 		this.saveToConfig();
 	}
 
-	public void updateBasigns() {
-		for (final Location l : this.bsigns) {
+	public void updateSigns() {
+		for (final Location l : this.signs) {
 			if (l.getBlock().getState() instanceof Sign) {
 				final Sign s = (Sign) l.getBlock().getState();
 				s.setLine(0, ChatColor.GOLD + "Elimination");
 				s.setLine(3, this.getName());
-				s.setLine(2, ChatColor.BLUE + "Bravo");
+				if (getMaxPlayers() > 1) {
+					s.setLine(2, ChatColor.GRAY + "2v2");
+				} else {
+					s.setLine(2, ChatColor.GRAY + "1v1");
+				}
 				s.setLine(1, ChatColor.GREEN + "[JOIN]");
 				s.update();
 			} else {
-				this.bsigns.remove(l);
-			}
-		}
-	}
-
-	public void registerASign(final Location loc) {
-		if (!this.asigns.contains(loc) && loc.getBlock().getState() instanceof Sign) {
-			this.asigns.add(loc);
-			this.updateAasigns();
-		}
-		this.saveToConfig();
-	}
-
-	public void updateAasigns() {
-		for (final Location l : this.asigns) {
-			if (l.getBlock().getState() instanceof Sign) {
-				final Sign s = (Sign) l.getBlock().getState();
-				s.setLine(0, ChatColor.GOLD + "Elimination");
-				s.setLine(3, this.getName());
-				s.setLine(2, ChatColor.RED + "Alpha");
-				s.setLine(1, ChatColor.GREEN + "[JOIN]");
-				s.update();
-			} else {
-				this.asigns.remove(l);
+				this.signs.remove(l);
 			}
 		}
 	}
@@ -458,10 +440,10 @@ public class Map {
 			if (containsBPlayer(p)) {
 				onBDeath(p);
 			}
-			if (aDead.size() >= 2) {
+			if (aDead.size() >= maxPlayers) {
 				onEliminated(1);
 			}
-			if (bDead.size() >= 2) {
+			if (bDead.size() >= maxPlayers) {
 				onEliminated(2);
 			}
 		}
@@ -700,28 +682,28 @@ public class Map {
 	}
 
 	public void addAlphaPlayer(Player p) {
-		if (!containsAPlayer(p) && state.canJoin() && getNumberOfAPlayers() <= 2) {
+		if (!containsAPlayer(p) && state.canJoin() && getNumberOfAPlayers() <= maxPlayers) {
 			Alpha a = new Alpha(p, this);
 			alpha.add(a);
 			p.teleport(aLoc);
 			updateBoard();
 			message(ChatColor.GREEN + p.getName() + " joined the Map.");
 			MessageManager.get().message(p, "You joined Alpha team.");
-			if (state.equals(MapState.WAITING) && getNumberOfAPlayers() == 2) {
+			if (state.equals(MapState.WAITING) && getNumberOfAPlayers() + getNumberOfBPlayers() == maxPlayers * 2) {
 				start();
 			}
 		}
 	}
 
 	public void addBravoPlayer(Player p) {
-		if (!containsBPlayer(p) && getNumberOfBPlayers() <= 2) {
+		if (!containsBPlayer(p) && getNumberOfBPlayers() <= maxPlayers) {
 			Bravo b = new Bravo(p, this);
 			bravo.add(b);
 			p.teleport(bLoc);
 			updateBoard();
 			message(ChatColor.GREEN + p.getName() + " joined the game.");
 			MessageManager.get().message(p, "You joined Bravo team.");
-			if (state.equals(MapState.WAITING) && getNumberOfBPlayers() == 2) {
+			if (state.equals(MapState.WAITING) && getNumberOfBPlayers() + getNumberOfAPlayers() == maxPlayers * 2) {
 				start();
 			}
 		}
@@ -736,7 +718,7 @@ public class Map {
 			a.removeDeathCircle();
 			a.removeNameTag();
 			ScoreBoard.get().removeSB(p);
-			if (state.equals(MapState.STARTED) && getNumberOfAPlayers() < 1) {
+			if (state.equals(MapState.STARTED) && getNumberOfAPlayers() < maxPlayers) {
 				stop();
 				message(ChatColor.RED + "Players left, stopping game.");
 			}
@@ -752,7 +734,7 @@ public class Map {
 			b.removeDeathCircle();
 			b.removeNameTag();
 			ScoreBoard.get().removeSB(p);
-			if (state.equals(MapState.STARTED) && getNumberOfBPlayers() < 1) {
+			if (state.equals(MapState.STARTED) && getNumberOfBPlayers() < maxPlayers) {
 				stop();
 				message(ChatColor.RED + "Players left, stopping game.");
 			}

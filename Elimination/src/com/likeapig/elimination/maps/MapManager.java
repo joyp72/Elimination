@@ -11,43 +11,46 @@ import com.likeapig.elimination.Settings;
 import com.likeapig.elimination.utils.LocationUtils;
 
 public class MapManager {
-	
+
 	public static MapManager instance;
 	private List<Map> maps;
-	
+
 	static {
 		instance = new MapManager();
 	}
-	
+
 	public static MapManager get() {
 		return instance;
 	}
-	
+
 	private MapManager() {
 		maps = new ArrayList<Map>();
 	}
-	
-	public void registerMap(String s) {
+
+	public void registerMap(String s, int i) {
 		if (getMap(s) == null) {
-			Map m = new Map(s);
+			Map m = new Map(s, i);
 			maps.add(m);
 		}
 	}
-	
+
 	public void setupMaps() {
 		maps.clear();
 		if (Settings.get().get("maps") != null) {
 			for (String s : Settings.get().getConfigSection().getKeys(false)) {
+				if (!s.contains(".") && Settings.get().get("maps." + s + ".maxPlayers") != null) {
+					final int i = Settings.get().get("maps." + s + ".maxPlayers");
 					try {
-						registerMap(s);
+						registerMap(s, i);
 					} catch (Exception ex) {
 						Main.get().getLogger().info("Exception ocurred when loading map: " + s);
 						ex.printStackTrace();
+					}
 				}
 			}
 		}
 	}
-	
+
 	public Map getMap(Player p) {
 		for (Map m : maps) {
 			if (m.containsAPlayer(p)) {
@@ -59,7 +62,7 @@ public class MapManager {
 		}
 		return null;
 	}
-	
+
 	public Map getMap(String name) {
 		for (Map m : maps) {
 			if (m.getName().equalsIgnoreCase(name)) {
@@ -68,14 +71,14 @@ public class MapManager {
 		}
 		return null;
 	}
-	
+
 	public void removeMap(Map m) {
 		if (maps.contains(m)) {
 			maps.remove(m);
 			m.onRemoved();
 		}
 	}
-	
+
 	public List<Map> getMaps() {
 		return maps;
 	}
