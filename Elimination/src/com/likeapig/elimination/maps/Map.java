@@ -643,7 +643,7 @@ public class Map {
 		teleportBPlayers();
 		Bukkit.getScheduler().scheduleSyncDelayedTask(Main.get(), new Runnable() {
 			public void run() {
-				Timer.get().createTimer(getMap(), "endround", 5).startTimer(getMap(), "endround");
+				Timer.get().createTimer(getMap(), "endround", 90).startTimer(getMap(), "endround");
 			}
 		}, 20L);
 	}
@@ -663,6 +663,7 @@ public class Map {
 		votes = 0;
 		voted.clear();
 		resetWins();
+		removeZone();
 		countdown = 0;
 		aDead.clear();
 		bDead.clear();
