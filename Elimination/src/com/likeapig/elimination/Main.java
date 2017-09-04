@@ -41,7 +41,7 @@ public class Main extends JavaPlugin {
 	public void onDisable() {
 		this.getLogger().info("Disabled !");
 		for (final Map m : MapManager.get().getMaps()) {
-			m.kickAll(false);
+			m.kickAll(true);
 		}
 	}
 

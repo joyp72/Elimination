@@ -27,9 +27,9 @@ public class MapManager {
 		maps = new ArrayList<Map>();
 	}
 
-	public void registerMap(String s, int i) {
+	public void registerMap(String s) {
 		if (getMap(s) == null) {
-			Map m = new Map(s, i);
+			Map m = new Map(s);
 			maps.add(m);
 		}
 	}
@@ -38,14 +38,11 @@ public class MapManager {
 		maps.clear();
 		if (Settings.get().get("maps") != null) {
 			for (String s : Settings.get().getConfigSection().getKeys(false)) {
-				if (!s.contains(".") && Settings.get().get("maps." + s + ".maxPlayers") != null) {
-					final int i = Settings.get().get("maps." + s + ".maxPlayers");
-					try {
-						registerMap(s, i);
-					} catch (Exception ex) {
-						Main.get().getLogger().info("Exception ocurred when loading map: " + s);
-						ex.printStackTrace();
-					}
+				try {
+					registerMap(s);
+				} catch (Exception ex) {
+					Main.get().getLogger().info("Exception ocurred when loading map: " + s);
+					ex.printStackTrace();
 				}
 			}
 		}

@@ -8,11 +8,11 @@ import com.likeapig.elimination.maps.MessageManager;
 import com.likeapig.elimination.maps.MessageManager.MessageType;
 
 public class Create extends Commands {
-	
+
 	public Create() {
 		super("elimination.admin", "Create a Map", "<name>", new String[] { "c", "createmap" });
 	}
-	
+
 	@Override
 	public void onCommand(Player sender, String[] args) {
 		if (args.length == 0) {
@@ -20,13 +20,12 @@ public class Create extends Commands {
 			return;
 		}
 		final String id = args[0];
-		int i = Integer.parseInt(args[1]);
 		Map m = MapManager.get().getMap(id);
 		if (m != null) {
 			MessageManager.get().message(sender, "That map already exists.", MessageType.BAD);
 			return;
 		}
-		MapManager.get().registerMap(id, i);
+		MapManager.get().registerMap(id);
 		MessageManager.get().message(sender, "Map created!", MessageType.GOOD);
 	}
 

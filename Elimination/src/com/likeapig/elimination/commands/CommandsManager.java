@@ -42,8 +42,6 @@ public class CommandsManager implements CommandExecutor {
 		cmds.add(new Test());
 		cmds.add(new SetLoc1());
 		cmds.add(new SetLoc2());
-		cmds.add(new SetMaxPlayers());
-		cmds.add(new GetMaxPlayers());
 	}
 
 	public boolean onCommand(CommandSender sender, Command cmd, String arg2, String[] args) {

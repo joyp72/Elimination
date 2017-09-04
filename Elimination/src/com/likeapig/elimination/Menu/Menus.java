@@ -80,6 +80,8 @@ public class Menus {
 			lore.add(l[3]);
 			lore.add(l[4]);
 			lore.add(l[5]);
+			lore.add(l[6]);
+			lore.add(l[7]);
 			meta.setLore(lore);
 			eli.setItemMeta(meta);
 			eli.addUnsafeEnchantment(Enchantment.ARROW_DAMAGE, 2);

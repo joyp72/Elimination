@@ -10,7 +10,7 @@ import com.likeapig.elimination.maps.MessageManager.MessageType;
 public class Start extends Commands {
 	
 	public Start() {
-		super("elimination.admin", "Start a game", "", new String[] { "s" });
+		super("elimination.default", "Start a game", "", new String[] { "s" });
 	}
 	
 	@Override
@@ -24,7 +24,12 @@ public class Start extends Commands {
 			MessageManager.get().message(sender, "The game has already been started.", MessageType.BAD);
 			return;
 		}
-		m.start();
+		if (m.playerVoted(sender)) {
+			MessageManager.get().message(sender, "You have already voted.", MessageType.BAD);
+			return;
+		}
+		m.addVotes(sender);
+		MessageManager.get().message(sender, "You voted to start the game!");
 	}
 
 }

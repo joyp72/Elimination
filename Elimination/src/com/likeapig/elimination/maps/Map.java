@@ -44,21 +44,23 @@ public class Map {
 	private Location loc1;
 	private Location loc2;
 	public List<Location> signs;
-	public int maxPlayers;
+	public int votes;
+	public List<Player> voted;
 
-	public Map(String n, int i) {
+	public Map(String n) {
 		name = n;
 		aWins = 0;
 		bWins = 0;
 		countdown = 0;
 		c2 = 0;
 		c3 = 0;
-		maxPlayers = i;
+		votes = 0;
 		alpha = new ArrayList<Alpha>();
 		bravo = new ArrayList<Bravo>();
 		aDead = new ArrayList<Player>();
 		bDead = new ArrayList<Player>();
 		signs = new ArrayList<Location>();
+		voted = new ArrayList<Player>();
 		loadFromConfig();
 		if (loc1 != null && loc2 != null) {
 			cuboid = new Cuboid(loc1, loc2);
@@ -68,13 +70,16 @@ public class Map {
 
 	}
 
-	public void setMaxPlayers(int i) {
-		maxPlayers = i;
-		saveToConfig();
+	public int getVotes() {
+		return votes;
 	}
 
-	public int getMaxPlayers() {
-		return maxPlayers;
+	public void addVotes(Player p) {
+		votes++;
+		voted.add(p);
+		if (votes >= 2) {
+			start();
+		}
 	}
 
 	public void onTimerTick(String arg, int timer) {
@@ -153,7 +158,6 @@ public class Map {
 	}
 
 	public void saveToConfig() {
-		Settings.get().set("maps." + this.getName() + ".maxPlayers", maxPlayers);
 		if (aLoc != null) {
 			Settings.get().set("maps." + getName() + ".aloc", LocationUtils.locationToString(aLoc));
 		}
@@ -175,10 +179,6 @@ public class Map {
 
 	public void loadFromConfig() {
 		Settings s = Settings.get();
-		if (s.get("maps." + this.getName() + ".maxPlayers") != null) {
-			final int i = s.get("maps." + this.getName() + ".maxPlayers");
-			maxPlayers = i;
-		}
 		if (s.get("maps." + getName() + ".aloc") != null) {
 			String s3 = s.get("maps." + getName() + ".aloc");
 			aLoc = LocationUtils.stringToLocation(s3);
@@ -238,42 +238,71 @@ public class Map {
 	public void handleRevive(PlayerToggleSneakEvent e) {
 		Player p = e.getPlayer();
 		Map m = MapManager.get().getMap(p);
-		if (isStarted()) {
-			if (containsAPlayer(p)) {
-				if (p.isSneaking()) {
-					for (Alpha a : alpha) {
-						if (a.isDead()) {
-							Location l = a.getDeathLoc();
-							if (p.getLocation().distance(l) <= 1 && !getAlpha(p).isDead()) {
-								a.ready();
-								a.setDead(false);
-								a.getPlayer().teleport(l);
-								a.removeDeathCircle();
-								onARemoveDeath(a.getPlayer());
-								updateBoard();
+		Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(Main.get(), new Runnable() {
+			int i = 6;
+
+			@Override
+			public void run() {
+				if (isStarted()) {
+					if (containsAPlayer(p)) {
+						if (p.isSneaking()) {
+							i--;
+							for (Alpha a : alpha) {
+								if (a.isDead()) {
+									Location l = a.getDeathLoc();
+									if (p.getLocation().distance(l) <= 1 && !getAlpha(p).isDead()) {
+										Titles.get().addTitle(p, ChatColor.GREEN + "Reviving..");
+										Titles.get().addSubTitle(p, String.valueOf(i));
+										if (i <= 0) {
+											a.ready();
+											a.setDead(false);
+											a.getPlayer().teleport(l);
+											a.removeDeathCircle();
+											onARemoveDeath(a.getPlayer());
+											updateBoard();
+											Titles.get().addTitle(p, " ");
+											Titles.get().addSubTitle(p, ChatColor.GREEN + "Revived " + ChatColor.WHITE
+													+ a.getPlayer().getName());
+											return;
+										}
+									}
+								}
 							}
+						} else {
+							i = 6;
+						}
+					}
+					if (containsBPlayer(p)) {
+						if (p.isSneaking()) {
+							i--;
+							for (Bravo b : bravo) {
+								if (b.isDead()) {
+									Location l = b.getDeathLoc();
+									if (p.getLocation().distance(l) <= 1 && !getBravo(p).isDead()) {
+										Titles.get().addTitle(p, ChatColor.GREEN + "Reviving..");
+										Titles.get().addSubTitle(p, String.valueOf(i));
+										if (i <= 0) {
+											b.ready();
+											b.setDead(false);
+											b.getPlayer().teleport(l);
+											b.removeDeathCircle();
+											onBRemoveDeath(b.getPlayer());
+											updateBoard();
+											Titles.get().addTitle(p, " ");
+											Titles.get().addSubTitle(p, ChatColor.GREEN + "Revived " + ChatColor.WHITE
+													+ b.getPlayer().getName());
+											return;
+										}
+									}
+								}
+							}
+						} else {
+							i = 6;
 						}
 					}
 				}
 			}
-			if (containsBPlayer(p)) {
-				if (p.isSneaking()) {
-					for (Bravo b : bravo) {
-						if (b.isDead()) {
-							Location l = b.getDeathLoc();
-							if (p.getLocation().distance(l) <= 1 && !getBravo(p).isDead()) {
-								b.ready();
-								b.setDead(false);
-								b.getPlayer().teleport(l);
-								b.removeDeathCircle();
-								onBRemoveDeath(b.getPlayer());
-								updateBoard();
-							}
-						}
-					}
-				}
-			}
-		}
+		}, 0L, 20L);
 	}
 
 	public void handleRespawn(PlayerRespawnEvent e) {
@@ -419,11 +448,6 @@ public class Map {
 				final Sign s = (Sign) l.getBlock().getState();
 				s.setLine(0, ChatColor.GOLD + "Elimination");
 				s.setLine(3, this.getName());
-				if (getMaxPlayers() > 1) {
-					s.setLine(2, ChatColor.GRAY + "2v2");
-				} else {
-					s.setLine(2, ChatColor.GRAY + "1v1");
-				}
 				s.setLine(1, ChatColor.GREEN + "[JOIN]");
 				s.update();
 			} else {
@@ -440,13 +464,21 @@ public class Map {
 			if (containsBPlayer(p)) {
 				onBDeath(p);
 			}
-			if (aDead.size() >= maxPlayers) {
+			if (aDead.size() == getNumberOfAPlayers()) {
 				onEliminated(1);
 			}
-			if (bDead.size() >= maxPlayers) {
+			if (bDead.size() == getNumberOfBPlayers()) {
 				onEliminated(2);
 			}
 		}
+	}
+
+	public List<Player> getADead() {
+		return aDead;
+	}
+
+	public List<Player> getBDead() {
+		return bDead;
 	}
 
 	public void removeDeath(Player p) {
@@ -569,6 +601,8 @@ public class Map {
 		if (loc1 != null && loc2 != null) {
 			cuboid.restoreBackup();
 		}
+		votes = 0;
+		voted.clear();
 		resetWins();
 		countdown = 0;
 		aDead.clear();
@@ -585,18 +619,15 @@ public class Map {
 		}
 		setState(MapState.WAITING);
 		Timer.get().stopTasks(this);
-		Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(Main.get(), new Runnable() {
-			@Override
-			public void run() {
-				kickAll(true);
-			}
-		}, 10L);
+		kickAll(true);
 	}
 
 	public void start() {
 		if (loc1 != null && loc2 != null) {
 			cuboid.save();
 		}
+		votes = 0;
+		voted.clear();
 		setState(MapState.STARTED);
 		Timer.get().stopTasks(this);
 		for (Alpha a : alpha) {
@@ -682,28 +713,28 @@ public class Map {
 	}
 
 	public void addAlphaPlayer(Player p) {
-		if (!containsAPlayer(p) && state.canJoin() && getNumberOfAPlayers() <= maxPlayers) {
+		if (!containsAPlayer(p) && state.canJoin() && getNumberOfAPlayers() < 2) {
 			Alpha a = new Alpha(p, this);
 			alpha.add(a);
 			p.teleport(aLoc);
 			updateBoard();
 			message(ChatColor.GREEN + p.getName() + " joined the Map.");
 			MessageManager.get().message(p, "You joined Alpha team.");
-			if (state.equals(MapState.WAITING) && getNumberOfAPlayers() + getNumberOfBPlayers() == maxPlayers * 2) {
+			if (state.equals(MapState.WAITING) && (getNumberOfBPlayers() + getNumberOfAPlayers()) == 4) {
 				start();
 			}
 		}
 	}
 
 	public void addBravoPlayer(Player p) {
-		if (!containsBPlayer(p) && getNumberOfBPlayers() <= maxPlayers) {
+		if (!containsBPlayer(p) && state.canJoin() && getNumberOfBPlayers() < 2) {
 			Bravo b = new Bravo(p, this);
 			bravo.add(b);
 			p.teleport(bLoc);
 			updateBoard();
 			message(ChatColor.GREEN + p.getName() + " joined the game.");
 			MessageManager.get().message(p, "You joined Bravo team.");
-			if (state.equals(MapState.WAITING) && getNumberOfBPlayers() + getNumberOfAPlayers() == maxPlayers * 2) {
+			if (state.equals(MapState.WAITING) && (getNumberOfBPlayers() + getNumberOfAPlayers()) == 4) {
 				start();
 			}
 		}
@@ -718,7 +749,7 @@ public class Map {
 			a.removeDeathCircle();
 			a.removeNameTag();
 			ScoreBoard.get().removeSB(p);
-			if (state.equals(MapState.STARTED) && getNumberOfAPlayers() < maxPlayers) {
+			if (state.equals(MapState.STARTED) && getNumberOfAPlayers() < 2) {
 				stop();
 				message(ChatColor.RED + "Players left, stopping game.");
 			}
@@ -734,7 +765,7 @@ public class Map {
 			b.removeDeathCircle();
 			b.removeNameTag();
 			ScoreBoard.get().removeSB(p);
-			if (state.equals(MapState.STARTED) && getNumberOfBPlayers() < maxPlayers) {
+			if (state.equals(MapState.STARTED) && getNumberOfBPlayers() < 2) {
 				stop();
 				message(ChatColor.RED + "Players left, stopping game.");
 			}
@@ -845,6 +876,13 @@ public class Map {
 			players.add(b.getPlayer());
 		}
 		return players;
+	}
+
+	public boolean playerVoted(Player p) {
+		if (voted.contains(p)) {
+			return true;
+		}
+		return false;
 	}
 
 	public boolean containsAPlayer(Player p) {
