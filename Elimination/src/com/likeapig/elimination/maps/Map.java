@@ -239,7 +239,7 @@ public class Map {
 		Player p = e.getPlayer();
 		Map m = MapManager.get().getMap(p);
 		Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(Main.get(), new Runnable() {
-			int i = 6;
+			int i = 4;
 
 			@Override
 			public void run() {
@@ -269,7 +269,7 @@ public class Map {
 								}
 							}
 						} else {
-							i = 6;
+							i = 4;
 						}
 					}
 					if (containsBPlayer(p)) {
@@ -297,7 +297,7 @@ public class Map {
 								}
 							}
 						} else {
-							i = 6;
+							i = 4;
 						}
 					}
 				}
