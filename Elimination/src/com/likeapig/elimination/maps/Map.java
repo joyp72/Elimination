@@ -10,6 +10,7 @@ import org.bukkit.block.Sign;
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerToggleSneakEvent;
@@ -17,10 +18,13 @@ import org.bukkit.event.player.PlayerToggleSneakEvent;
 import com.likeapig.elimination.Main;
 import com.likeapig.elimination.Settings;
 import com.likeapig.elimination.maps.MessageManager.MessageType;
+import com.likeapig.elimination.particles.Rift;
 import com.likeapig.elimination.scoreboard.ScoreBoard;
 import com.likeapig.elimination.teams.Alpha;
 import com.likeapig.elimination.teams.Bravo;
 import com.likeapig.elimination.utils.LocationUtils;
+import com.projectkorra.projectkorra.BendingPlayer;
+import com.projectkorra.projectkorra.Element;
 
 import net.md_5.bungee.api.ChatColor;
 
@@ -40,12 +44,14 @@ public class Map {
 	private int c2;
 	private int c3;
 	private int id1;
-	private Cuboid cuboid;
-	private Location loc1;
-	private Location loc2;
 	public List<Location> signs;
 	public int votes;
 	public List<Player> voted;
+	public Location rift;
+	public boolean zone;
+	public boolean aClaiming;
+	public boolean bClaiming;
+	public int id;
 
 	public Map(String n) {
 		name = n;
@@ -55,6 +61,9 @@ public class Map {
 		c2 = 0;
 		c3 = 0;
 		votes = 0;
+		zone = false;
+		aClaiming = false;
+		bClaiming = false;
 		alpha = new ArrayList<Alpha>();
 		bravo = new ArrayList<Bravo>();
 		aDead = new ArrayList<Player>();
@@ -62,9 +71,6 @@ public class Map {
 		signs = new ArrayList<Location>();
 		voted = new ArrayList<Player>();
 		loadFromConfig();
-		if (loc1 != null && loc2 != null) {
-			cuboid = new Cuboid(loc1, loc2);
-		}
 		saveToConfig();
 		checkState();
 
@@ -80,6 +86,77 @@ public class Map {
 		if (votes >= 2) {
 			start();
 		}
+	}
+
+	public void setRift(Location l) {
+		rift = l;
+		saveToConfig();
+	}
+
+	public void addZone() {
+		if (!zone) {
+			Rift.get().spawnRift(rift);
+			zone = true;
+			Timer.get().stopTasks(this);
+			if (zone) {
+				id = Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(Main.get(), new Runnable() {
+					
+					int ai = 7;
+					int bi = 7;
+
+					@Override
+					public void run() {
+						for (Player p : getAPlayers()) {
+							if (p.getLocation().distance(rift) < 3) {
+								bClaiming = false;
+								aClaiming = true;
+								ai--;
+								Titles.get().addTitle(p, ChatColor.GREEN + "Claiming..");
+								Titles.get().addSubTitle(p, String.valueOf(ai));
+								if (ai <= 0 && aClaiming) {
+									Rift.get().removeRift();
+									ai = 7;
+									aClaiming = false;
+									zone = false;
+									onEliminated(2);
+									removeZone();
+									return;
+								}
+
+							} else {
+								ai = 7;
+							}
+						}
+						for (Player p : getBPlayers()) {
+							if (p.getLocation().distance(rift) < 3) {
+								aClaiming = false;
+								bClaiming = true;
+								bi--;
+								Titles.get().addTitle(p, ChatColor.GREEN + "Claiming..");
+								Titles.get().addSubTitle(p, String.valueOf(bi));
+								if (bi <= 0  && bClaiming) {
+									Rift.get().removeRift();
+									bi = 7;
+									bClaiming = false;
+									zone = false;
+									onEliminated(1);
+									removeZone();
+									return;
+								}
+
+							} else {
+								bi = 7;
+							}
+						}
+					}
+
+				}, 0L, 20L);
+			}
+		}
+	}
+	
+	public void removeZone() {
+		Bukkit.getServer().getScheduler().cancelTask(id);
 	}
 
 	public void onTimerTick(String arg, int timer) {
@@ -114,7 +191,7 @@ public class Map {
 	public void onTimerEnd(String arg) {
 		if (arg.equalsIgnoreCase("endround")) {
 			if (isStarted()) {
-				endRound();
+				addZone();
 			}
 		}
 		if (arg.equalsIgnoreCase("bwins")) {
@@ -145,18 +222,6 @@ public class Map {
 		saveToConfig();
 	}
 
-	public void setLoc1(Location l) {
-		loc1 = l;
-		checkState();
-		saveToConfig();
-	}
-
-	public void setLoc2(Location l) {
-		loc2 = l;
-		checkState();
-		saveToConfig();
-	}
-
 	public void saveToConfig() {
 		if (aLoc != null) {
 			Settings.get().set("maps." + getName() + ".aloc", LocationUtils.locationToString(aLoc));
@@ -164,11 +229,8 @@ public class Map {
 		if (bLoc != null) {
 			Settings.get().set("maps." + getName() + ".bloc", LocationUtils.locationToString(bLoc));
 		}
-		if (loc1 != null) {
-			Settings.get().set("maps." + getName() + ".loc1", LocationUtils.locationToString(loc1));
-		}
-		if (loc2 != null) {
-			Settings.get().set("maps." + getName() + ".loc2", LocationUtils.locationToString(loc2));
+		if (rift != null) {
+			Settings.get().set("maps." + getName() + ".rift", LocationUtils.locationToString(rift));
 		}
 		final List<String> signs = new ArrayList<String>();
 		for (final Location l : this.signs) {
@@ -187,13 +249,9 @@ public class Map {
 			String s2 = s.get("maps." + getName() + ".bloc");
 			bLoc = LocationUtils.stringToLocation(s2);
 		}
-		if (s.get("maps." + getName() + ".loc1") != null) {
-			String s4 = s.get("maps." + getName() + ".loc1");
-			loc1 = LocationUtils.stringToLocation(s4);
-		}
-		if (s.get("maps." + getName() + ".loc2") != null) {
-			String s5 = s.get("maps." + getName() + ".loc2");
-			loc2 = LocationUtils.stringToLocation(s5);
+		if (s.get("maps." + getName() + ".rift") != null) {
+			String s4 = s.get("maps." + getName() + ".rift");
+			rift = LocationUtils.stringToLocation(s4);
 		}
 		if (s.get("maps." + this.getName() + ".signs") != null) {
 			final List<String> signs = s.get("maps." + this.getName() + ".signs");
@@ -208,6 +266,7 @@ public class Map {
 		message(ChatColor.RED + "The round has ended!");
 		aDead.clear();
 		bDead.clear();
+		removeZone();
 		countdown = 0;
 		Timer.get().stopTasks(this);
 		Bukkit.getServer().getScheduler().cancelTask(id1);
@@ -326,6 +385,11 @@ public class Map {
 			Location l = p.getLocation();
 			if (!isStarted()) {
 				e.setCancelled(true);
+			}
+			BendingPlayer bp = BendingPlayer.getBendingPlayer(p);
+			if (bp.canBendPassive(Element.AIR) && e.getCause() == DamageCause.FALL) {
+				e.setCancelled(true);
+				return;
 			}
 			if (isStarted()) {
 				if (p.getHealth() - e.getDamage() < 0.5) {
@@ -506,9 +570,6 @@ public class Map {
 	}
 
 	public void startNewRound() {
-		if (loc1 != null && loc2 != null) {
-			cuboid.restoreBackup();
-		}
 		List<Alpha> aWinners = new ArrayList<Alpha>();
 		List<Bravo> bWinners = new ArrayList<Bravo>();
 		boolean flag = aWins + bWins == 0;
@@ -582,7 +643,7 @@ public class Map {
 		teleportBPlayers();
 		Bukkit.getScheduler().scheduleSyncDelayedTask(Main.get(), new Runnable() {
 			public void run() {
-				Timer.get().createTimer(getMap(), "endround", 90).startTimer(getMap(), "endround");
+				Timer.get().createTimer(getMap(), "endround", 5).startTimer(getMap(), "endround");
 			}
 		}, 20L);
 	}
@@ -598,9 +659,7 @@ public class Map {
 	}
 
 	public void stop() {
-		if (loc1 != null && loc2 != null) {
-			cuboid.restoreBackup();
-		}
+
 		votes = 0;
 		voted.clear();
 		resetWins();
@@ -623,11 +682,9 @@ public class Map {
 	}
 
 	public void start() {
-		if (loc1 != null && loc2 != null) {
-			cuboid.save();
-		}
 		votes = 0;
 		voted.clear();
+		updateBoard();
 		setState(MapState.STARTED);
 		Timer.get().stopTasks(this);
 		for (Alpha a : alpha) {
@@ -693,12 +750,6 @@ public class Map {
 			flag = true;
 		}
 		if (bLoc == null) {
-			flag = true;
-		}
-		if (loc1 == null) {
-			flag = true;
-		}
-		if (loc2 == null) {
 			flag = true;
 		}
 		if (flag) {

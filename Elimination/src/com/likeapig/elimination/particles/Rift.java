@@ -9,20 +9,22 @@ import org.bukkit.util.Vector;
 
 import com.likeapig.elimination.Main;
 
-public class Particles {
+public class Rift {
 
-	public static Particles instance;
+	public static Rift instance;
+	public int id;
 
 	static {
-		instance = new Particles();
+		instance = new Rift();
 	}
 
-	public static Particles get() {
+	public static Rift get() {
 		return instance;
 	}
 
-	public void playDeathCircle(Location loc) {
-		Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(Main.get(), new Runnable() {
+	public void spawnRift(Location loc) {
+
+		id = Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(Main.get(), new Runnable() {
 
 			int i = 0;
 			int p = 74;
@@ -31,8 +33,9 @@ public class Particles {
 
 			@Override
 			public void run() {
-				final ArrayList<Location> locs = getCircle(l, 1, 75);
-				final ArrayList<Location> locs2 = getCircleReverse(l, 1, 75);
+
+				final ArrayList<Location> locs = getCircle(l, 3, 75);
+				final ArrayList<Location> locs2 = getCircleReverse(l, 3, 75);
 				final float speed = 0.1f;
 				final Vector v = locs.get(i).toVector().subtract(l.toVector()).normalize();
 				final Vector v2 = locs2.get(i).toVector().subtract(l.toVector()).normalize();
@@ -42,6 +45,7 @@ public class Particles {
 				ParticleEffect.INSTANT_SPELL.display(v2.multiply(-2), speed, locs2.get(i), 100.0);
 				ParticleEffect.INSTANT_SPELL.display(v3.multiply(-2), speed, locs.get(p), 100.0);
 				ParticleEffect.INSTANT_SPELL.display(v4.multiply(-2), speed, locs2.get(p), 100.0);
+
 				++i;
 				++f;
 				--p;
@@ -55,12 +59,16 @@ public class Particles {
 					return;
 				}
 
-				final ArrayList<Location> locs3 = getCircle(l, 1, 75);
+				final ArrayList<Location> locs3 = getCircle(l, 3, 75);
 				for (final Location ia : locs3) {
 					ParticleEffect.INSTANT_SPELL.display(0.0f, 0.0f, 0.0f, 0.0f, 1, ia, 100.0);
 				}
 			}
 		}, 0L, 0L);
+	}
+	
+	public void removeRift() {
+		Bukkit.getServer().getScheduler().cancelTask(id);
 	}
 
 	//
@@ -203,5 +211,4 @@ public class Particles {
 		}
 		return locations;
 	}
-
 }

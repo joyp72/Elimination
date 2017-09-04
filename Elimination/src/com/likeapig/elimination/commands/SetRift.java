@@ -7,10 +7,10 @@ import com.likeapig.elimination.maps.MapManager;
 import com.likeapig.elimination.maps.MessageManager;
 import com.likeapig.elimination.maps.MessageManager.MessageType;
 
-public class SetLoc2 extends Commands {
+public class SetRift extends Commands {
 	
-	public SetLoc2() {
-		super("elimination.admin", "Set loc2 of a map", "<map>", new String[] { "sl2" });
+	public SetRift() {
+		super("elimination.admin", "Set the rift location of a map", "<map>", new String[] { "sr" });
 	}
 	
 	@Override
@@ -25,8 +25,7 @@ public class SetLoc2 extends Commands {
 			MessageManager.get().message(sender, "Unknown map.", MessageType.BAD);
 			return;
 		}
-		m.setLoc2(sender.getLocation());
-		MessageManager.get().message(sender, "Loc2 set for: " + m.getName(), MessageType.GOOD);
+		m.setRift(sender.getLocation());
+		MessageManager.get().message(sender, "Rift location set for: " + m.getName(), MessageType.GOOD);
 	}
-
 }

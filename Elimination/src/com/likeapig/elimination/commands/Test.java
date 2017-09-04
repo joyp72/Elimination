@@ -6,6 +6,7 @@ import com.likeapig.elimination.maps.Map;
 import com.likeapig.elimination.maps.MapManager;
 import com.likeapig.elimination.maps.MessageManager;
 import com.likeapig.elimination.maps.MessageManager.MessageType;
+import com.likeapig.elimination.particles.Rift;
 
 public class Test extends Commands {
 
@@ -15,9 +16,7 @@ public class Test extends Commands {
 
 	@Override
 	public void onCommand(Player sender, String[] args) {
-		Map m = MapManager.get().getMap(sender);
-		
-		MessageManager.get().message(sender, "Votes: " + String.valueOf(m.getVotes()));
+		Rift.get().spawnRift(sender.getLocation());
 		
 	}
 

@@ -1,7 +1,9 @@
 name: Elimination
 author: likeapig
-version: 0.1
+version: 0.1.2
 main: com.likeapig.elimination.Main
+depend: [ProjectKorra]
 
 commands:
   e:
+    description: Main command for Elimination.
