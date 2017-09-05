@@ -4,15 +4,23 @@ import java.util.ArrayList;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.EntityType;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
 
 import com.likeapig.elimination.Main;
+
+import net.md_5.bungee.api.ChatColor;
 
 public class Rift {
 
 	public static Rift instance;
 	public int id;
+	public ArmorStand AS;
+	public boolean loop = false;
 
 	static {
 		instance = new Rift();
@@ -20,6 +28,29 @@ public class Rift {
 
 	public static Rift get() {
 		return instance;
+	}
+
+	public void spawnItem(Location loc) {
+
+		ItemStack item = new ItemStack(Material.CONCRETE);
+
+		AS = (ArmorStand) loc.getWorld().spawnEntity(loc, EntityType.ARMOR_STAND);
+		AS.setGravity(false);
+		AS.setHelmet(item);
+		AS.setVisible(false);
+		AS.setSmall(false);
+		AS.setCustomName(ChatColor.WHITE + "" + ChatColor.BOLD + "CLAIM ZONE");
+		AS.setCustomNameVisible(true);
+		AS.setSilent(true);
+		AS.setCollidable(false);
+		AS.setInvulnerable(true);
+
+	}
+
+	public void removeItem() {
+		if (AS != null) {
+			AS.remove();
+		}
 	}
 
 	public void spawnRift(Location loc) {
@@ -30,6 +61,7 @@ public class Rift {
 			int p = 74;
 			int f = 0;
 			Location l = loc.clone();
+			Location il = loc.clone().add(0, 1.5, 0);
 
 			@Override
 			public void run() {
@@ -66,7 +98,7 @@ public class Rift {
 			}
 		}, 0L, 0L);
 	}
-	
+
 	public void removeRift() {
 		Bukkit.getServer().getScheduler().cancelTask(id);
 	}

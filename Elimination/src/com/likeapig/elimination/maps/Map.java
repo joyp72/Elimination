@@ -6,7 +6,10 @@ import java.util.List;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.block.Sign;
+import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
@@ -14,7 +17,11 @@ import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerToggleSneakEvent;
+import org.bukkit.inventory.ItemStack;
 
+import com.alessiodp.parties.Parties;
+import com.alessiodp.parties.objects.Party;
+import com.alessiodp.parties.utils.api.PartiesAPI;
 import com.likeapig.elimination.Main;
 import com.likeapig.elimination.Settings;
 import com.likeapig.elimination.maps.MessageManager.MessageType;
@@ -52,6 +59,10 @@ public class Map {
 	public boolean aClaiming;
 	public boolean bClaiming;
 	public int id;
+	public int id2;
+	public ArmorStand AAS;
+	public ArmorStand BAS;
+	public ArmorStand AS;
 
 	public Map(String n) {
 		name = n;
@@ -99,10 +110,105 @@ public class Map {
 			zone = true;
 			Timer.get().stopTasks(this);
 			if (zone) {
+
+				id2 = Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(Main.get(), new Runnable() {
+
+					Location l = rift.clone().add(0, 1.5, 0);
+
+					@Override
+					public void run() {
+						if (!aClaiming && !bClaiming) {
+							if (AAS != null) {
+								AAS.remove();
+								AAS = null;
+							}
+							if (BAS != null) {
+								BAS.remove();
+								BAS = null;
+							}
+							if (AS == null) {
+								ItemStack item = new ItemStack(Material.CONCRETE);
+
+								AS = (ArmorStand) l.getWorld().spawnEntity(l, EntityType.ARMOR_STAND);
+								AS.setGravity(false);
+								AS.setHelmet(item);
+								AS.setVisible(false);
+								AS.setSmall(false);
+								AS.setCustomName(ChatColor.WHITE + "" + ChatColor.BOLD + "CLAIM ZONE");
+								AS.setCustomNameVisible(true);
+								AS.setSilent(true);
+								AS.setCollidable(false);
+								AS.setInvulnerable(true);
+							}
+
+							l.setYaw((l.getYaw() + 2.5F));
+
+							AS.teleport(l);
+						}
+						if (aClaiming) {
+							if (AS != null) {
+								AS.remove();
+								AS = null;
+							}
+							if (BAS != null) {
+								BAS.remove();
+								BAS = null;
+							}
+							if (AAS == null) {
+								ItemStack item = new ItemStack(Material.CONCRETE, 1, (short) 14);
+
+								AAS = (ArmorStand) l.getWorld().spawnEntity(l, EntityType.ARMOR_STAND);
+								AAS.setGravity(false);
+								AAS.setHelmet(item);
+								AAS.setVisible(false);
+								AAS.setSmall(false);
+								AAS.setCustomName(ChatColor.RED + "" + ChatColor.BOLD + "CLAIMING ZONE");
+								AAS.setCustomNameVisible(true);
+								AAS.setSilent(true);
+								AAS.setCollidable(false);
+								AAS.setInvulnerable(true);
+							}
+
+							l.setYaw((l.getYaw() + 2.5F));
+
+							AAS.teleport(l);
+						}
+						if (bClaiming) {
+							if (AAS != null) {
+								AAS.remove();
+								AAS = null;
+							}
+							if (AS != null) {
+								AS.remove();
+								AS = null;
+							}
+							if (BAS == null) {
+								ItemStack item = new ItemStack(Material.CONCRETE, 1, (short) 11);
+
+								BAS = (ArmorStand) l.getWorld().spawnEntity(l, EntityType.ARMOR_STAND);
+								BAS.setGravity(false);
+								BAS.setHelmet(item);
+								BAS.setVisible(false);
+								BAS.setSmall(false);
+								BAS.setCustomName(ChatColor.BLUE + "" + ChatColor.BOLD + "CLAIMING ZONE");
+								BAS.setCustomNameVisible(true);
+								BAS.setSilent(true);
+								BAS.setCollidable(false);
+								BAS.setInvulnerable(true);
+							}
+
+							l.setYaw((l.getYaw() + 2.5F));
+
+							BAS.teleport(l);
+						}
+					}
+
+				}, 0L, 0L);
 				id = Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(Main.get(), new Runnable() {
-					
+
 					int ai = 7;
 					int bi = 7;
+					Location l = rift.clone().add(0, 1.5, 0);
 
 					@Override
 					public void run() {
@@ -111,19 +217,25 @@ public class Map {
 								bClaiming = false;
 								aClaiming = true;
 								ai--;
-								Titles.get().addTitle(p, ChatColor.GREEN + "Claiming..");
+								Titles.get().addTitle(p, ChatColor.RED + "Claiming..");
 								Titles.get().addSubTitle(p, String.valueOf(ai));
 								if (ai <= 0 && aClaiming) {
 									Rift.get().removeRift();
+									if (AAS != null) {
+										AAS.remove();
+										AAS = null;
+									}
 									ai = 7;
 									aClaiming = false;
 									zone = false;
 									onEliminated(2);
 									removeZone();
-									return;
 								}
 
 							} else {
+								aClaiming = false;
+								Titles.get().addTitle(p, " ");
+								Titles.get().addSubTitle(p, " ");
 								ai = 7;
 							}
 						}
@@ -132,19 +244,25 @@ public class Map {
 								aClaiming = false;
 								bClaiming = true;
 								bi--;
-								Titles.get().addTitle(p, ChatColor.GREEN + "Claiming..");
+								Titles.get().addTitle(p, ChatColor.BLUE + "Claiming..");
 								Titles.get().addSubTitle(p, String.valueOf(bi));
-								if (bi <= 0  && bClaiming) {
+								if (bi <= 0 && bClaiming) {
 									Rift.get().removeRift();
+									if (BAS != null) {
+										BAS.remove();
+										BAS = null;
+									}
 									bi = 7;
 									bClaiming = false;
 									zone = false;
 									onEliminated(1);
 									removeZone();
-									return;
 								}
 
 							} else {
+								bClaiming = false;
+								Titles.get().addTitle(p, " ");
+								Titles.get().addSubTitle(p, " ");
 								bi = 7;
 							}
 						}
@@ -154,9 +272,28 @@ public class Map {
 			}
 		}
 	}
-	
+
 	public void removeZone() {
+		Rift.get().removeRift();
 		Bukkit.getServer().getScheduler().cancelTask(id);
+		Bukkit.getServer().getScheduler().cancelTask(id2);
+		zone = false;
+		if (AAS != null) {
+			AAS.remove();
+			AAS = null;
+		}
+		if (AS != null) {
+			AS.remove();
+			AS = null;
+		}
+		if (BAS != null) {
+			BAS.remove();
+			BAS = null;
+		}
+	}
+	
+	public boolean isZone() {
+		return zone;
 	}
 
 	public void onTimerTick(String arg, int timer) {
@@ -312,6 +449,9 @@ public class Map {
 									if (p.getLocation().distance(l) <= 1 && !getAlpha(p).isDead()) {
 										Titles.get().addTitle(p, ChatColor.GREEN + "Reviving..");
 										Titles.get().addSubTitle(p, String.valueOf(i));
+										Titles.get().addTitle(a.getPlayer(),
+												ChatColor.GREEN + "You are being revived..");
+										Titles.get().addSubTitle(a.getPlayer(), String.valueOf(i));
 										if (i <= 0) {
 											a.ready();
 											a.setDead(false);
@@ -340,6 +480,9 @@ public class Map {
 									if (p.getLocation().distance(l) <= 1 && !getBravo(p).isDead()) {
 										Titles.get().addTitle(p, ChatColor.GREEN + "Reviving..");
 										Titles.get().addSubTitle(p, String.valueOf(i));
+										Titles.get().addTitle(b.getPlayer(),
+												ChatColor.GREEN + "You are being revived..");
+										Titles.get().addSubTitle(b.getPlayer(), String.valueOf(i));
 										if (i <= 0) {
 											b.ready();
 											b.setDead(false);
@@ -643,7 +786,7 @@ public class Map {
 		teleportBPlayers();
 		Bukkit.getScheduler().scheduleSyncDelayedTask(Main.get(), new Runnable() {
 			public void run() {
-				Timer.get().createTimer(getMap(), "endround", 90).startTimer(getMap(), "endround");
+				Timer.get().createTimer(getMap(), "endround", 5).startTimer(getMap(), "endround");
 			}
 		}, 20L);
 	}

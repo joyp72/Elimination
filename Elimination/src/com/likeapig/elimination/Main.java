@@ -5,6 +5,7 @@ import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionDefault;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import com.alessiodp.parties.utils.api.PartiesAPI;
 import com.likeapig.elimination.Menu.MenusListener;
 import com.likeapig.elimination.commands.CommandsManager;
 import com.likeapig.elimination.maps.Map;
@@ -36,6 +37,14 @@ public class Main extends JavaPlugin {
             Bukkit.getPluginManager().addPermission(new Permission("elimination.admin"));
             Bukkit.getPluginManager().getPermission("elimination.admin").setDefault(PermissionDefault.OP);
         }
+		
+		if (getServer().getPluginManager().getPlugin("Parties") != null) {
+			if (getServer().getPluginManager().getPlugin("Parties").isEnabled()) {
+				PartiesAPI api = new PartiesAPI();
+				getLogger().info("Hooked with Parties.");
+			}
+		}
+		
 	}
 
 	public void onDisable() {

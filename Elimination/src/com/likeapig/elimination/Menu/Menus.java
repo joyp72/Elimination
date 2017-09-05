@@ -34,6 +34,11 @@ public class Menus {
 			meta.setDisplayName(ChatColor.RED + "Alpha");
 			ArrayList<String> lore = new ArrayList<>();
 			lore.add(ChatColor.GRAY + "Join alpha team");
+			lore.add(" ");
+			lore.add(ChatColor.GRAY + "Players: ");
+			for (Player ap : m.getAPlayers()) {
+				lore.add(ChatColor.RED + "  " + ap.getName());
+			}
 			meta.setLore(lore);
 			alpha.setItemMeta(meta);
 			teams.setItem(2, alpha);
@@ -45,6 +50,11 @@ public class Menus {
 			meta.setDisplayName(ChatColor.BLUE + "Bravo");
 			ArrayList<String> lore = new ArrayList<>();
 			lore.add(ChatColor.GRAY + "Join bravo team");
+			lore.add(" ");
+			lore.add(ChatColor.GRAY + "Players: ");
+			for (Player bp : m.getBPlayers()) {
+				lore.add(ChatColor.BLUE + bp.getName());
+			}
 			meta.setLore(lore);
 			bravo.setItemMeta(meta);
 			teams.setItem(6, bravo);
@@ -72,8 +82,10 @@ public class Menus {
 			ArrayList<String> lore = new ArrayList<>();
 			lore.add(ChatColor.GRAY + "BETA PHASE");
 			lore.add(" ");
-			lore.add(ChatColor.WHITE + "" + ChatColor.BOLD + "Overview: " );
-			String l [] = formatLore("Elimination is a 2v2 (for now) bending minigame. Teammates will be able to revive each other and the first team to eliminate the other will win the round. The first team to win 5 rounds wins the game. If a team does not eliminate the other before the timer ends, a new round will start.", 30, org.bukkit.ChatColor.GRAY);
+			lore.add(ChatColor.WHITE + "" + ChatColor.BOLD + "Overview: ");
+			String l[] = formatLore(
+					"Elimination is a 2v2 (for now) bending minigame. Teammates will be able to revive each other and the first team to eliminate the other will win the round. The first team to win 5 rounds wins the game. If a team does not eliminate the other before the timer ends, a new round will start.",
+					30, org.bukkit.ChatColor.GRAY);
 			lore.add(l[0]);
 			lore.add(l[1]);
 			lore.add(l[2]);

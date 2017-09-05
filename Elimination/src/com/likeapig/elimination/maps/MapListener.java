@@ -32,6 +32,11 @@ import com.likeapig.elimination.Main;
 import com.likeapig.elimination.Menu.Menus;
 import com.likeapig.elimination.teams.Alpha;
 import com.likeapig.elimination.teams.Bravo;
+import com.projectkorra.projectkorra.ability.Ability;
+import com.projectkorra.projectkorra.ability.AirAbility;
+import com.projectkorra.projectkorra.airbending.AirShield;
+import com.projectkorra.projectkorra.event.AbilityProgressEvent;
+import com.projectkorra.projectkorra.event.AbilityStartEvent;
 
 import net.md_5.bungee.api.ChatColor;
 
@@ -49,6 +54,19 @@ public class MapListener implements Listener {
 
 	public void setup() {
 		Bukkit.getPluginManager().registerEvents(this, Main.get());
+	}
+
+	@EventHandler
+	public void onAbilityProgress(AbilityStartEvent e) {
+		Player p = e.getAbility().getPlayer();
+		Map m = MapManager.get().getMap(p);
+		if (m != null) {
+			if (m.isZone()) {
+				if (e.getAbility().equals(AirAbility.getAbility(AirShield.class))) {
+					e.setCancelled(true);
+				}
+			}
+		}
 	}
 
 	@EventHandler

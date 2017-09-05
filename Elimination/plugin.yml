@@ -2,7 +2,7 @@ name: Elimination
 author: likeapig
 version: 0.1.2
 main: com.likeapig.elimination.Main
-depend: [ProjectKorra]
+depend: [ProjectKorra, Parties]
 
 commands:
   e:

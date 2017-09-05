@@ -16,8 +16,17 @@ public class Test extends Commands {
 
 	@Override
 	public void onCommand(Player sender, String[] args) {
-		Rift.get().spawnRift(sender.getLocation());
-		
+		if (args.length == 0) {
+			Rift.get().spawnRift(sender.getLocation());
+		}
+		if (args.length == 1) {
+
+			if (args[0].equalsIgnoreCase("stop")) {
+				Rift.get().removeItem();
+				Rift.get().removeRift();
+			}
+		}
+
 	}
 
 }

@@ -7,6 +7,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 
+import com.alessiodp.parties.utils.api.PartiesAPI;
 import com.likeapig.elimination.Main;
 import com.likeapig.elimination.maps.Map;
 import com.likeapig.elimination.maps.MapManager;
@@ -18,6 +19,7 @@ import net.md_5.bungee.api.ChatColor;
 public class MenusListener implements Listener {
 
 	private static MenusListener instance;
+	PartiesAPI api = new PartiesAPI();
 
 	static {
 		instance = new MenusListener();
@@ -57,7 +59,25 @@ public class MenusListener implements Listener {
 								MessageManager.get().message(p, "Map is being used!", MessageType.BAD);
 								return;
 							}
-							m2.addAlphaPlayer(p);
+							if (api.haveParty(p.getUniqueId())) {
+								String party = api.getPartyName(p.getUniqueId());
+								if (api.getPartyLeader(party) == p.getUniqueId()) {
+									m2.addAlphaPlayer(p);
+									if (api.getPartyOnlinePlayers(party).size() <= 2) {
+										for (Player pm : api.getPartyOnlinePlayers(party)) {
+											m2.addAlphaPlayer(pm);
+										}
+									} else {
+										MessageManager.get().message(p, "Maximum of 2 Players allowed on each team.", MessageType.BAD);
+										return;
+									}
+								} else {
+									MessageManager.get().message(p, "Ask your party leader to join the game.", MessageType.BAD);
+									return;
+								}
+							} else {
+								m2.addAlphaPlayer(p);
+							}
 						}
 					}
 					if (ChatColor.stripColor(e.getCurrentItem().getItemMeta().getDisplayName())
@@ -76,11 +96,30 @@ public class MenusListener implements Listener {
 								MessageManager.get().message(p, "Map is being used!", MessageType.BAD);
 								return;
 							}
-							m2.addBravoPlayer(p);
+							if (api.haveParty(p.getUniqueId())) {
+								String party = api.getPartyName(p.getUniqueId());
+								if (api.getPartyLeader(party) == p.getUniqueId()) {
+									m2.addBravoPlayer(p);
+									if (api.getPartyOnlinePlayers(party).size() <= 2) {
+										for (Player pm : api.getPartyOnlinePlayers(party)) {
+											m2.addBravoPlayer(pm);
+										}
+									} else {
+										MessageManager.get().message(p, "Maximum of 2 Players allowed on each team.", MessageType.BAD);
+										return;
+									}
+								} else {
+									MessageManager.get().message(p, "Ask your party leader to join the game.", MessageType.BAD);
+									return;
+								}
+							} else {
+								m2.addBravoPlayer(p);
+							}
 						}
 					}
 				}
-				if (e.getCurrentItem().getType() == Material.STAINED_GLASS_PANE || e.getCurrentItem().getType() == Material.EYE_OF_ENDER) {
+				if (e.getCurrentItem().getType() == Material.STAINED_GLASS_PANE
+						|| e.getCurrentItem().getType() == Material.EYE_OF_ENDER) {
 					e.setCancelled(true);
 				}
 			}
