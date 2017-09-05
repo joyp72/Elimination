@@ -26,6 +26,7 @@ import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerToggleSneakEvent;
+import org.bukkit.plugin.messaging.ChannelNotRegisteredException;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import com.likeapig.elimination.Main;
@@ -34,9 +35,13 @@ import com.likeapig.elimination.teams.Alpha;
 import com.likeapig.elimination.teams.Bravo;
 import com.projectkorra.projectkorra.ability.Ability;
 import com.projectkorra.projectkorra.ability.AirAbility;
+import com.projectkorra.projectkorra.airbending.AirBlast;
 import com.projectkorra.projectkorra.airbending.AirShield;
+import com.projectkorra.projectkorra.earthbending.EarthTunnel;
 import com.projectkorra.projectkorra.event.AbilityProgressEvent;
 import com.projectkorra.projectkorra.event.AbilityStartEvent;
+import com.projectkorra.projectkorra.firebending.FireBlastCharged;
+import com.projectkorra.projectkorra.firebending.FireShield;
 
 import net.md_5.bungee.api.ChatColor;
 
@@ -61,8 +66,11 @@ public class MapListener implements Listener {
 		Player p = e.getAbility().getPlayer();
 		Map m = MapManager.get().getMap(p);
 		if (m != null) {
+			if (e.getAbility() instanceof FireBlastCharged) {
+				e.setCancelled(true);
+			}
 			if (m.isZone()) {
-				if (e.getAbility().equals(AirAbility.getAbility(AirShield.class))) {
+				if (e.getAbility() instanceof AirShield || e.getAbility() instanceof FireShield | e.getAbility() instanceof EarthTunnel) {
 					e.setCancelled(true);
 				}
 			}
