@@ -329,6 +329,14 @@ public class Map {
 		if (arg.equalsIgnoreCase("endround")) {
 			if (isStarted()) {
 				addZone();
+				for (Player ap : getAPlayers()) {
+					Titles.get().addTitle(ap, ChatColor.WHITE + "Claim the Zone!");
+					Titles.get().addSubTitle(ap, " ");
+				}
+				for (Player bp : getBPlayers()) {
+					Titles.get().addTitle(bp, ChatColor.WHITE + "Claim the Zone!");
+					Titles.get().addSubTitle(bp, " ");
+				}
 			}
 		}
 		if (arg.equalsIgnoreCase("bwins")) {
