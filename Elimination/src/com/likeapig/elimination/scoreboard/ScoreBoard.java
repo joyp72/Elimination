@@ -14,6 +14,8 @@ import com.likeapig.elimination.maps.Map;
 import com.likeapig.elimination.maps.MapManager;
 import com.likeapig.elimination.teams.Alpha;
 import com.likeapig.elimination.teams.Bravo;
+import com.projectkorra.projectkorra.BendingPlayer;
+import com.projectkorra.projectkorra.ability.CoreAbility;
 
 import net.md_5.bungee.api.ChatColor;
 
@@ -98,6 +100,26 @@ public class ScoreBoard {
 								bP.setScore(i);
 								i--;
 							}
+						}
+					}
+					
+					BendingPlayer bp = BendingPlayer.getBendingPlayer(p);
+					for (int ii = 1; ii < 10; ii++) {
+						String abil = "Unbound Ability";
+						CoreAbility ca = CoreAbility.getAbility(bp.getAbilities().get(ii));
+						if (ca != null) {
+							abil = ca.getName();
+						}
+						
+						String sel = ">"  + ca.getElement().getColor() + abil;
+						String norm = ca.getElement().getColor() + abil;
+						
+						String selCD = ">" + ca.getElement().getColor() + "" + ChatColor.STRIKETHROUGH + abil;
+						String normCD = ca.getElement().getColor() + "" + ChatColor.STRIKETHROUGH + abil;
+						
+						if (bp.getBoundAbility() != null && bp.getBoundAbilityName().equalsIgnoreCase(ca.getName())) {
+							Score sc = main.getScore(norm);
+							if 
 						}
 					}
 
