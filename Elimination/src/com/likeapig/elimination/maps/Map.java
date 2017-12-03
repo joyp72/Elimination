@@ -19,9 +19,6 @@ import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerToggleSneakEvent;
 import org.bukkit.inventory.ItemStack;
 
-import com.alessiodp.parties.Parties;
-import com.alessiodp.parties.objects.Party;
-import com.alessiodp.parties.utils.api.PartiesAPI;
 import com.likeapig.elimination.Main;
 import com.likeapig.elimination.Settings;
 import com.likeapig.elimination.maps.MessageManager.MessageType;

@@ -7,7 +7,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 
-import com.alessiodp.parties.utils.api.PartiesAPI;
+import com.alessiodp.partiesapi.Parties;
+import com.alessiodp.partiesapi.interfaces.PartiesAPI;
 import com.likeapig.elimination.Main;
 import com.likeapig.elimination.maps.Map;
 import com.likeapig.elimination.maps.MapManager;
@@ -19,7 +20,7 @@ import net.md_5.bungee.api.ChatColor;
 public class MenusListener implements Listener {
 
 	private static MenusListener instance;
-	PartiesAPI api = new PartiesAPI();
+	PartiesAPI api = Parties.getApi();
 
 	static {
 		instance = new MenusListener();

@@ -119,7 +119,7 @@ public class ScoreBoard {
 						
 						if (bp.getBoundAbility() != null && bp.getBoundAbilityName().equalsIgnoreCase(ca.getName())) {
 							Score sc = main.getScore(norm);
-							if 
+							//if 
 						}
 					}
 

@@ -4,7 +4,8 @@ import java.util.UUID;
 
 import org.bukkit.entity.Player;
 
-import com.alessiodp.parties.utils.api.PartiesAPI;
+import com.alessiodp.partiesapi.Parties;
+import com.alessiodp.partiesapi.interfaces.PartiesAPI;
 import com.likeapig.elimination.maps.Map;
 import com.likeapig.elimination.maps.MapManager;
 import com.likeapig.elimination.maps.MessageManager;
@@ -12,7 +13,7 @@ import com.likeapig.elimination.maps.MessageManager.MessageType;
 
 public class Leave extends Commands {
 	
-	PartiesAPI api = new PartiesAPI();
+	PartiesAPI api = Parties.getApi();
 	
 	public Leave() {
 		super("elimination.default", "Leave a map", "", new String[] { "l" });
