@@ -22,7 +22,7 @@ import net.md_5.bungee.api.ChatColor;
 public class ScoreBoard {
 
 	public static ScoreBoard instance;
-	private int i = 10;
+	private int i = 20;
 
 	static {
 		instance = new ScoreBoard();
@@ -103,28 +103,66 @@ public class ScoreBoard {
 						}
 					}
 					
+					Score blank3 = main.getScore(" ");
+					blank3.setScore(i);
+					i--;
+					
+					Score abilities = main.getScore(ChatColor.LIGHT_PURPLE + "Abilities:");
+					abilities.setScore(i);
+					i--;
+
 					BendingPlayer bp = BendingPlayer.getBendingPlayer(p);
 					for (int ii = 1; ii < 10; ii++) {
 						String abil = "Unbound Ability";
+						org.bukkit.ChatColor elm = org.bukkit.ChatColor.RESET;
 						CoreAbility ca = CoreAbility.getAbility(bp.getAbilities().get(ii));
 						if (ca != null) {
 							abil = ca.getName();
+							elm = ca.getElement().getColor();
 						}
-						
-						String sel = ">"  + ca.getElement().getColor() + abil;
-						String norm = ca.getElement().getColor() + abil;
-						
-						String selCD = ">" + ca.getElement().getColor() + "" + ChatColor.STRIKETHROUGH + abil;
-						String normCD = ca.getElement().getColor() + "" + ChatColor.STRIKETHROUGH + abil;
-						
-						if (bp.getBoundAbility() != null && bp.getBoundAbilityName().equalsIgnoreCase(ca.getName())) {
-							Score sc = main.getScore(norm);
-							//if 
+
+						String sel = ">" + elm + abil;
+						String norm = elm + abil;
+
+						String selCD = ">" + elm + "" + ChatColor.STRIKETHROUGH + abil;
+						String normCD = elm + "" + ChatColor.STRIKETHROUGH + abil;
+
+						if (!bp.getBoundAbilityName().equalsIgnoreCase(abil)) {
+							if (ca != null) {
+								if (bp.isOnCooldown(ca)) {
+									Score sc = main.getScore(normCD);
+									sc.setScore(i);
+									i--;
+								} else {
+									Score sc = main.getScore(norm);
+									sc.setScore(i);
+									i--;
+								}
+							} else {
+								Score sc = main.getScore(norm);
+								sc.setScore(i);
+								i--;
+							}
+						} else {
+							if (ca != null) {
+								if (bp.isOnCooldown(ca)) {
+									Score sc = main.getScore(selCD);
+									sc.setScore(i);
+									i--;
+								} else {
+									Score sc = main.getScore(sel);
+									sc.setScore(i);
+									i--;
+								}
+							} else {
+								Score sc = main.getScore(sel);
+								sc.setScore(i);
+								i--;
+							}
 						}
 					}
-
 					p.setScoreboard(board);
-					i = 10;
+					i = 20;
 				}
 			}
 		}.runTask(Main.get());

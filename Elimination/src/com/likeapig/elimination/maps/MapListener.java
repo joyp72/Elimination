@@ -21,6 +21,7 @@ import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerPickupItemEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -40,6 +41,7 @@ import com.projectkorra.projectkorra.airbending.AirShield;
 import com.projectkorra.projectkorra.earthbending.EarthTunnel;
 import com.projectkorra.projectkorra.event.AbilityProgressEvent;
 import com.projectkorra.projectkorra.event.AbilityStartEvent;
+import com.projectkorra.projectkorra.event.PlayerCooldownChangeEvent;
 import com.projectkorra.projectkorra.firebending.FireBlastCharged;
 import com.projectkorra.projectkorra.firebending.FireShield;
 
@@ -74,6 +76,22 @@ public class MapListener implements Listener {
 					e.setCancelled(true);
 				}
 			}
+		}
+	}
+	
+	@EventHandler
+	public void onPlayerScroll(PlayerItemHeldEvent e) {
+		Player p = e.getPlayer();
+		if (MapManager.get().getMap(p) != null) {
+			MapManager.get().getMap(p).updateBoard();
+		}
+	}
+	
+	@EventHandler
+	public void onBPCooldown(PlayerCooldownChangeEvent e) {
+		Player p = e.getPlayer();
+		if (MapManager.get().getMap(p) != null) {
+			MapManager.get().getMap(p).updateBoard();
 		}
 	}
 
